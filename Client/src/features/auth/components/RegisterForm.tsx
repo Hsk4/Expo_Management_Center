@@ -1,4 +1,7 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "../../../contexts/Auth.context"
+import { registerUser } from "../../../services/auth.service"
 
 interface Props {
     role: "admin" | "exhibitor" | "attendee"
@@ -8,18 +11,46 @@ interface Props {
 const RegisterForm = ({ role, accent }: Props) => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
+    const [name, setName] = useState("")
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [confirmPassword, setConfirmPassword] = useState("")
+    const { login } = useAuth()
+    const navigate = useNavigate()
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
         setError("")
 
-        // simulate API call
-        setTimeout(() => {
+        if (password !== confirmPassword) {
+            setError("Passwords do not match");
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const data = await registerUser({
+                name,
+                email,
+                password,
+                role,
+            });
+
+            login(data.user, data.token);
+
+            // Redirect attendees to home page, others to their respective dashboards
+            if (data.user.role === "attendee") {
+                navigate("/");
+            } else {
+                navigate(`/${data.user.role}/dashboard`);
+            }
+        } catch (err: unknown) {
+            const errorMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Registration failed";
+            setError(errorMessage);
+        } finally {
             setLoading(false)
-            // Simulate success or show error
-            // setError("Registration failed")
-        }, 1500)
+        }
     }
 
     return (
@@ -35,6 +66,8 @@ const RegisterForm = ({ role, accent }: Props) => {
                 <input
                     type="text"
                     required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     className={`w-full mt-2 px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 ${accent} transition`}
                     placeholder="Enter your full name"
                 />
@@ -45,6 +78,8 @@ const RegisterForm = ({ role, accent }: Props) => {
                 <input
                     type="email"
                     required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className={`w-full mt-2 px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 ${accent} transition`}
                     placeholder="Enter your email"
                 />
@@ -67,6 +102,8 @@ const RegisterForm = ({ role, accent }: Props) => {
                 <input
                     type="password"
                     required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className={`w-full mt-2 px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 ${accent} transition`}
                     placeholder="Create a password"
                 />
@@ -77,6 +114,8 @@ const RegisterForm = ({ role, accent }: Props) => {
                 <input
                     type="password"
                     required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     className={`w-full mt-2 px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 ${accent} transition`}
                     placeholder="Confirm your password"
                 />

@@ -1,6 +1,7 @@
 import { useState } from "react"
-// import {AuthProvider} from "./contexts/Auth.context.tsx";
-
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "../../../contexts/Auth.context"
+import { loginUser } from "../../../services/auth.service"
 interface Props {
     role: "admin" | "exhibitor" | "attendee"
     accent: string
@@ -9,17 +10,33 @@ interface Props {
 const LoginForm = ({ role, accent }: Props) => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const { login } = useAuth()
+    const navigate = useNavigate()
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
         setError("")
 
-        // simulate API call
-        setTimeout(() => {
+        try {
+            const data = await loginUser({ email, password });
+
+            login(data.user, data.token);
+
+            // Redirect attendees to home page, others to their respective dashboards
+            if (data.user.role === "attendee") {
+                navigate("/");
+            } else {
+                navigate(`/${data.user.role}/dashboard`);
+            }
+        } catch (err: unknown) {
+            const errorMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Login failed";
+            setError(errorMessage);
+        } finally {
             setLoading(false)
-            setError("Invalid credentials")
-        }, 1500)
+        }
     }
 
     return (
@@ -35,6 +52,8 @@ const LoginForm = ({ role, accent }: Props) => {
                 <input
                     type="email"
                     required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className={`w-full mt-2 px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 ${accent} transition`}
                     placeholder="Enter your email"
                 />
@@ -45,6 +64,8 @@ const LoginForm = ({ role, accent }: Props) => {
                 <input
                     type="password"
                     required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className={`w-full mt-2 px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 ${accent} transition`}
                     placeholder="Enter your password"
                 />
@@ -53,7 +74,7 @@ const LoginForm = ({ role, accent }: Props) => {
             {/* Forgot password */}
             <div className="text-right">
                 <a
-                    href="#"
+                    href="/forgot-password"
                     className={`text-sm ${accent} hover:underline`}
                 >
                     Forgot password?

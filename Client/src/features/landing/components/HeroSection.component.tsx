@@ -1,6 +1,18 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { useAuth } from "../../../contexts/Auth.context"
 
 const HeroSection = () => {
+    const { user } = useAuth()
+    const navigate = useNavigate()
+
+    const handleAttendExpo = () => {
+        if (user?.role === "attendee") {
+            navigate("/expos")
+        } else {
+            navigate("/attendee/login")
+        }
+    }
+
     return (
         <div className="relative min-h-[90vh] flex items-center justify-center px-6">
 
@@ -36,12 +48,12 @@ const HeroSection = () => {
                 {/* CTA Buttons */}
                 <div className="flex flex-col md:flex-row items-center justify-center gap-6 pt-6">
 
-                    <Link
-                        to="/attendee/login"
+                    <button
+                        onClick={handleAttendExpo}
                         className="px-8 py-3 rounded-xl bg-white text-black font-semibold hover:bg-neutral-200 transition w-full md:w-auto text-center"
                     >
                         Attend an Expo
-                    </Link>
+                    </button>
 
                     <Link
                         to="/exhibitor/login"

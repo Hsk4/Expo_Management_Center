@@ -1,15 +1,57 @@
-import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useState, useEffect, useRef } from "react"
+import { Link, useNavigate, useLocation } from "react-router-dom"
+import { useAuth } from "../../contexts/Auth.context"
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false)
+    const [showProfileDropdown, setShowProfileDropdown] = useState(false)
     const navigate = useNavigate()
+    const location = useLocation()
+    const { user, logout } = useAuth()
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowProfileDropdown(false)
+            }
+        }
+
+        if (showProfileDropdown) {
+            document.addEventListener("mousedown", handleClickOutside)
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside)
+        }
+    }, [showProfileDropdown])
 
     const scrollToSection = (id: string) => {
-        const section = document.getElementById(id)
-        section?.scrollIntoView({ behavior: "smooth" })
         setIsOpen(false)
+
+        // If not on home page, navigate to home first
+        if (location.pathname !== "/") {
+            navigate("/")
+            // Wait for navigation to complete, then scroll
+            setTimeout(() => {
+                const section = document.getElementById(id)
+                section?.scrollIntoView({ behavior: "smooth" })
+            }, 100)
+        } else {
+            // Already on home page, just scroll
+            const section = document.getElementById(id)
+            section?.scrollIntoView({ behavior: "smooth" })
+        }
     }
+
+    const handleLogout = () => {
+        logout()
+        setShowProfileDropdown(false)
+        navigate("/")
+    }
+
+    const isAttendee = user?.role === "attendee"
 
     return (
         <header className="sticky top-0 z-50 backdrop-blur-md bg-white/5 border-b border-white/10">
@@ -32,6 +74,11 @@ const Navbar = () => {
                     <button onClick={() => scrollToSection("about")} className="hover:text-white transition">
                         About
                     </button>
+                    {isAttendee && (
+                        <button onClick={() => navigate("/expos")} className="hover:text-white transition">
+                            Expos
+                        </button>
+                    )}
                     <button onClick={() => scrollToSection("gallery")} className="hover:text-white transition">
                         Gallery
                     </button>
@@ -40,21 +87,82 @@ const Navbar = () => {
                     </button>
                 </div>
 
-                {/* Desktop Auth Buttons */}
+                {/* Desktop Auth Buttons / Profile */}
                 <div className="hidden md:flex items-center gap-4">
-                    <Link
-                        to="/attendee/login"
-                        className="text-sm px-4 py-2 rounded-lg border border-white/20 hover:bg-white/10 transition"
-                    >
-                        Login
-                    </Link>
+                    {isAttendee ? (
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/20 hover:bg-white/10 transition"
+                            >
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-sm font-semibold">
+                                    {user?.email.charAt(0).toUpperCase()}
+                                </div>
+                                <svg
+                                    className={`w-4 h-4 transition-transform ${showProfileDropdown ? 'rotate-180' : ''}`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
 
-                    <Link
-                        to="/attendee/register"
-                        className="text-sm px-4 py-2 rounded-lg bg-white text-black font-medium hover:bg-neutral-200 transition"
-                    >
-                        Get Started
-                    </Link>
+                            {/* Dropdown Menu */}
+                            {showProfileDropdown && (
+                                <div className="absolute right-0 mt-2 w-56 rounded-xl bg-neutral-900 border border-white/10 shadow-xl overflow-hidden">
+                                    <div className="px-4 py-3 border-b border-white/10">
+                                        <p className="text-sm text-neutral-400">Signed in as</p>
+                                        <p className="text-sm font-medium text-white truncate">{user?.email}</p>
+                                    </div>
+                                    <div className="py-2">
+                                        <button
+                                            onClick={() => {
+                                                setShowProfileDropdown(false)
+                                                navigate("/profile")
+                                            }}
+                                            className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-white/10 transition"
+                                        >
+                                            Profile Settings
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setShowProfileDropdown(false)
+                                                navigate("/my-tickets")
+                                            }}
+                                            className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-white/10 transition"
+                                        >
+                                            My Tickets
+                                        </button>
+                                    </div>
+                                    <div className="border-t border-white/10">
+                                        <button
+                                            onClick={handleLogout}
+                                            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition"
+                                        >
+                                            Logout
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <>
+                            <Link
+                                to="/attendee/login"
+                                className="text-sm px-4 py-2 rounded-lg border border-white/20 hover:bg-white/10 transition"
+                            >
+                                Login
+                            </Link>
+
+                            <Link
+                                to="/attendee/register"
+                                className="text-sm px-4 py-2 rounded-lg bg-white text-black font-medium hover:bg-neutral-200 transition"
+                            >
+                                Get Started
+                            </Link>
+                        </>
+                    )}
                 </div>
 
                 {/* Mobile Toggle */}
@@ -75,6 +183,17 @@ const Navbar = () => {
                     <button onClick={() => scrollToSection("about")} className="block w-full text-left">
                         About
                     </button>
+                    {isAttendee && (
+                        <button
+                            onClick={() => {
+                                navigate("/expos")
+                                setIsOpen(false)
+                            }}
+                            className="block w-full text-left"
+                        >
+                            Expos
+                        </button>
+                    )}
                     <button onClick={() => scrollToSection("gallery")} className="block w-full text-left">
                         Gallery
                     </button>
@@ -83,15 +202,50 @@ const Navbar = () => {
                     </button>
 
                     <div className="pt-4 border-t border-white/10 space-y-3">
-                        <Link to="/attendee/login" className="block">
-                            Login
-                        </Link>
-                        <Link
-                            to="/attendee/register"
-                            className="block px-4 py-2 rounded-lg bg-white text-black text-center"
-                        >
-                            Get Started
-                        </Link>
+                        {isAttendee ? (
+                            <>
+                                <div className="px-4 py-2 bg-white/5 rounded-lg">
+                                    <p className="text-xs text-neutral-400">Signed in as</p>
+                                    <p className="text-sm font-medium text-white truncate">{user?.email}</p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        navigate("/profile")
+                                        setIsOpen(false)
+                                    }}
+                                    className="block w-full text-left px-4 py-2 rounded-lg hover:bg-white/10"
+                                >
+                                    Profile Settings
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        navigate("/my-tickets")
+                                        setIsOpen(false)
+                                    }}
+                                    className="block w-full text-left px-4 py-2 rounded-lg hover:bg-white/10"
+                                >
+                                    My Tickets
+                                </button>
+                                <button
+                                    onClick={handleLogout}
+                                    className="block w-full text-left px-4 py-2 rounded-lg text-red-400 hover:bg-red-500/10"
+                                >
+                                    Logout
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link to="/attendee/login" className="block">
+                                    Login
+                                </Link>
+                                <Link
+                                    to="/attendee/register"
+                                    className="block px-4 py-2 rounded-lg bg-white text-black text-center"
+                                >
+                                    Get Started
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             )}

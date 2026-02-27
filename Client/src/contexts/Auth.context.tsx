@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 
 interface User {
     id: string
@@ -18,6 +18,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null)
     const [token, setToken] = useState<string | null>(null)
+
+    // Restore auth state from localStorage on mount
+    useEffect(() => {
+        const storedToken = localStorage.getItem("token")
+        const storedUser = localStorage.getItem("user")
+
+        if (storedToken && storedUser) {
+            try {
+                const parsedUser = JSON.parse(storedUser)
+                setUser(parsedUser)
+                setToken(storedToken)
+            } catch (error) {
+                console.error("Failed to parse stored user data", error)
+                localStorage.removeItem("token")
+                localStorage.removeItem("user")
+            }
+        }
+    }, [])
 
     const login = (user: User, token: string) => {
         setUser(user)
