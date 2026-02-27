@@ -1,5 +1,5 @@
 import './App.css'
-import AppRoutes from "./routes/Auth.routes.tsx";
+import AppRoutes from "./routes/App.routes.tsx";
 
 function App() {
   return(

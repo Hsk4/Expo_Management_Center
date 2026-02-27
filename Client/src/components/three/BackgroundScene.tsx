@@ -49,10 +49,25 @@ const BackgroundScene = () => {
             new THREE.Float32BufferAttribute(vertices, 3)
         )
 
+        // Create circular texture for round particles
+        const textureCanvas = document.createElement('canvas')
+        textureCanvas.width = 64
+        textureCanvas.height = 64
+        const ctx = textureCanvas.getContext('2d')!
+        ctx.fillStyle = 'white'
+        ctx.beginPath()
+        ctx.arc(32, 32, 32, 0, Math.PI * 2)
+        ctx.fill()
+
+        const texture = new THREE.CanvasTexture(textureCanvas)
+
         const material = new THREE.PointsMaterial({
             color: 0xffffff,
             size: 0.1,
             sizeAttenuation: true,
+            map: texture,
+            transparent: true,
+            sizeAttenuation: true
         })
 
         const particles = new THREE.Points(geometry, material)

@@ -22,3 +22,6 @@
     animation: fadeIn 0.6s ease forwards;
 }
 
+html {
+    scroll-behavior: smooth;
+}

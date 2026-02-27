@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import BackgroundScene from "../three/BackgroundScene"
-import GlassCard from "../ui/GlassCard"
+import GlassCard from "../ui/GlassCard.tsx"
 
 interface Props {
     title: string

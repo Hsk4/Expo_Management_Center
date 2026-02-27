@@ -6,11 +6,18 @@ import AdminRegisterPage from "../features/auth/pages/AdminRegister.page.tsx"
 import ExhibitorRegisterPage from "../features/auth/pages/ExhibitorRegister.page.tsx"
 import AttendeeRegisterPage from "../features/auth/pages/AttendeeRegister.page.tsx"
 import ProtectedRoute from "./protected.routes.tsx";
-
+import RootLayout from "../components/layout/Root.layout.tsx";
+import HomePage from "../features/landing/pages/Home.page.tsx";
 
 const AppRoutes = () => {
     return (
         <Routes>
+            {/* Home Routes */}
+
+            <Route element={<RootLayout />}>
+                <Route path="/" element={<HomePage />} />
+            </Route>
+
             {/* Login Routes */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/exhibitor/login" element={<ExhibitorLoginPage />} />
