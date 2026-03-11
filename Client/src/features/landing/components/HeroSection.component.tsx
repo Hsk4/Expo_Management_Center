@@ -6,10 +6,18 @@ const HeroSection = () => {
     const navigate = useNavigate()
 
     const handleAttendExpo = () => {
-        if (user?.role === "attendee") {
+        if (user?.role === "attendee" || user?.role === "exhibitor") {
             navigate("/expos")
         } else {
             navigate("/attendee/login")
+        }
+    }
+
+    const handleExhibitorAction = () => {
+        if (user?.role === "exhibitor") {
+            navigate("/exhibitor/dashboard")
+        } else {
+            navigate("/exhibitor/login")
         }
     }
 
@@ -52,24 +60,48 @@ const HeroSection = () => {
                         onClick={handleAttendExpo}
                         className="px-8 py-3 rounded-xl bg-white text-black font-semibold hover:bg-neutral-200 transition w-full md:w-auto text-center"
                     >
-                        Attend an Expo
+                        {user?.role === "attendee" || user?.role === "exhibitor" ? "Browse Expos" : "Attend an Expo"}
                     </button>
 
-                    <Link
-                        to="/exhibitor/login"
-                        className="px-8 py-3 rounded-xl border border-white/20 bg-white/5 backdrop-blur-md hover:bg-white/10 transition w-full md:w-auto text-center"
-                    >
-                        Become an Exhibitor
-                    </Link>
+                    {user?.role !== "exhibitor" && (
+                        <button
+                            onClick={handleExhibitorAction}
+                            className="px-8 py-3 rounded-xl border border-white/20 bg-white/5 backdrop-blur-md hover:bg-white/10 transition w-full md:w-auto text-center"
+                        >
+                            Become an Exhibitor
+                        </button>
+                    )}
+
+                    {user?.role === "exhibitor" && (
+                        <button
+                            onClick={handleExhibitorAction}
+                            className="px-8 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-semibold hover:from-purple-600 hover:to-blue-600 transition w-full md:w-auto text-center"
+                        >
+                            Go to Exhibitor Dashboard
+                        </button>
+                    )}
 
                 </div>
 
                 {/* Secondary Link */}
                 <div className="pt-4 text-sm text-neutral-500">
-                    Are you an organizer?{" "}
-                    <Link to="/admin/login" className="text-neutral-300 hover:text-white transition">
-                        Admin Login
-                    </Link>
+                    {user?.role === "admin" ? (
+                        <>
+                            <button
+                                onClick={() => navigate("/admin/dashboard")}
+                                className="text-neutral-300 hover:text-white transition underline"
+                            >
+                                Go to Admin Dashboard
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            Are you an organizer?{" "}
+                            <Link to="/admin/login" className="text-neutral-300 hover:text-white transition">
+                                Admin Login
+                            </Link>
+                        </>
+                    )}
                 </div>
 
             </div>

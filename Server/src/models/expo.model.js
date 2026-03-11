@@ -1,5 +1,16 @@
 const mongoose = require('mongoose');
 
+const layoutBoothSchema = new mongoose.Schema({
+    boothNumber: { type: String, required: true },
+    row: { type: Number, required: true },
+    col: { type: Number, required: true },
+    status: {
+        type: String,
+        enum: ["available", "reserved", "booked", "disabled"],
+        default: "available",
+    },
+}, { _id: false });
+
 const expoSchema = new mongoose.Schema({
     title : {
         type : String,
@@ -68,9 +79,29 @@ const expoSchema = new mongoose.Schema({
         required : [true, "Grid columns is required"],
         min : [1, "Grid columns must be at least 1"],
     },
+    totalBoothsGenerated : {
+        type : Number,
+        default : 0,
+    },
     isActive : {
         type : Boolean,
         default : true,
+    },
+    layout: {
+        templateType: { type: String, default: "" },
+        eventType: { type: String, default: "" },
+        customImageUrl: { type: String, default: "" },
+        booths: { type: [layoutBoothSchema], default: [] },
+        stagePosition: {
+            x: { type: Number },
+            y: { type: Number },
+            width: { type: Number },
+            height: { type: Number },
+        },
+        foodStallPositions: {
+            type: [{ x: Number, y: Number, label: String }],
+            default: [],
+        },
     },
     createdBy : {
         type : mongoose.Schema.Types.ObjectId,
@@ -88,16 +119,17 @@ const expoSchema = new mongoose.Schema({
 
 );
 
-expoSchema.pre('save', function(next) {
+expoSchema.pre('save', async function() {
     if(this.endDate <= this.startDate){
-        return next(new Error("End date must be after start date"));
+        throw new Error("End date must be after start date");
     }
 
     const gridCapacity = this.gridRows * this.gridCols;
     if(this.maxBooths > gridCapacity){
-        return next(new Error(`Max booths cannot exceed grid capacity of ${gridCapacity}`));
+        throw new Error(`Max booths cannot exceed grid capacity of ${gridCapacity}`);
     }
-    next();
 });
 
 const Expo = mongoose.model("Expo", expoSchema);
+
+module.exports = Expo;

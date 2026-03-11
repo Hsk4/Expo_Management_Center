@@ -1,19 +1,24 @@
 import { Navigate } from "react-router-dom"
 import { useAuth } from "../contexts/Auth.context.tsx"
-import type {JSX} from "react";
+import type { JSX } from "react"
 
 interface Props {
     children: JSX.Element
-    allowedRole: "admin" | "exhibitor" | "attendee"
+    allowedRole?: "admin" | "exhibitor" | "attendee"
+    allowedRoles?: Array<"admin" | "exhibitor" | "attendee">
 }
 
-const ProtectedRoute = ({ children, allowedRole }: Props) => {
+const ProtectedRoute = ({ children, allowedRole, allowedRoles }: Props) => {
     const { user } = useAuth()
 
     if (!user) return <Navigate to="/" />
 
-    if (user.role !== allowedRole)
-        return <Navigate to={`/${user.role}/dashboard`} />
+    const permittedRoles = allowedRoles ?? (allowedRole ? [allowedRole] : [])
+
+    if (permittedRoles.length > 0 && !permittedRoles.includes(user.role)) {
+        const fallbackPath = user.role === "attendee" ? "/" : `/${user.role}/dashboard`
+        return <Navigate to={fallbackPath} />
+    }
 
     return children
 }

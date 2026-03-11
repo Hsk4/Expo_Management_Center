@@ -11,26 +11,36 @@ import ProtectedRoute from "./protected.routes.tsx";
 import RootLayout from "../components/layout/Root.layout.tsx";
 import HomePage from "../features/landing/pages/Home.page.tsx";
 import ExposPage from "../features/attendee/pages/ExposPage.tsx";
+import AdminDashboardPage from "../features/admin/pages/Dashboard.page.tsx";
+import ExhibitorDashboardPage from "../features/exhibitor/pages/Dashboard.page.tsx"
+import ExhibitorBoothBookingPage from "../features/exhibitor/pages/BoothBooking.page.tsx"
+import ExpoFloorViewPage from "../features/attendee/pages/ExpoFloorView.page.tsx"
 
 const AppRoutes = () => {
     return (
         <Routes>
-            {/* Home Routes */}
-
             <Route element={<RootLayout />}>
                 <Route path="/" element={<HomePage />} />
                 <Route
                     path="/expos"
                     element={
-                        <ProtectedRoute allowedRole="attendee">
+                        <ProtectedRoute allowedRoles={["attendee", "exhibitor"]}>
                             <ExposPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/expo/:expoId/floor"
+                    element={
+                        <ProtectedRoute allowedRoles={["attendee", "exhibitor"]}>
+                            <ExpoFloorViewPage />
                         </ProtectedRoute>
                     }
                 />
                 <Route
                     path="/profile"
                     element={
-                        <ProtectedRoute allowedRole="attendee">
+                        <ProtectedRoute allowedRoles={["attendee", "exhibitor"]}>
                             <div className="min-h-screen flex items-center justify-center">
                                 <h1 className="text-3xl text-white">Profile Settings - Coming Soon</h1>
                             </div>
@@ -40,7 +50,7 @@ const AppRoutes = () => {
                 <Route
                     path="/my-tickets"
                     element={
-                        <ProtectedRoute allowedRole="attendee">
+                        <ProtectedRoute allowedRoles={["attendee", "exhibitor"]}>
                             <div className="min-h-screen flex items-center justify-center">
                                 <h1 className="text-3xl text-white">My Tickets - Coming Soon</h1>
                             </div>
@@ -49,26 +59,38 @@ const AppRoutes = () => {
                 />
             </Route>
 
-            {/* Login Routes */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/exhibitor/login" element={<ExhibitorLoginPage />} />
             <Route path="/attendee/login" element={<AttendeeLoginPage />} />
 
-            {/* Register Routes */}
             <Route path="/admin/register" element={<AdminRegisterPage />} />
             <Route path="/exhibitor/register" element={<ExhibitorRegisterPage />} />
             <Route path="/attendee/register" element={<AttendeeRegisterPage />} />
 
-            {/* Password Reset Routes */}
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-            {/* Future Dashboards */}
             <Route
                 path="/admin/dashboard"
                 element={
                     <ProtectedRoute allowedRole="admin">
-                        <div>Admin Dashboard</div>
+                        <AdminDashboardPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/exhibitor/dashboard"
+                element={
+                    <ProtectedRoute allowedRole="exhibitor">
+                        <ExhibitorDashboardPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/exhibitor/book-booth/:expoId"
+                element={
+                    <ProtectedRoute allowedRole="exhibitor">
+                        <ExhibitorBoothBookingPage />
                     </ProtectedRoute>
                 }
             />
