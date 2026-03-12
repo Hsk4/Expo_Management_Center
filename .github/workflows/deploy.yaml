@@ -27,7 +27,7 @@ jobs:
          
        # Step 3: Build and push backend Docker image and push to Docker Hub
        - name: Build and push backend
-         uses: docker/build-push-actions@v5
+         uses: docker/build-push-action@v5
          with:
             context: .
             dockerfile: Dockerfile
@@ -35,7 +35,7 @@ jobs:
             tags: ${{secrets.DOCKER_USERNAME}}/expo-backend:latest
        # Step 4: Build the frontend docker image and push to Docker Hub
        - name: Build and push frontend
-         uses: docker/build-push-actions@v5
+         uses: docker/build-push-action@v5
          with:
           context: ./Client
           dockerfile: Client/Dockerfile
