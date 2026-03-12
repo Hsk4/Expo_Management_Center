@@ -1,20 +1,24 @@
-# Builder Stage
-FROM node:18-alpine3.20 as build
+#Builder Stage
+FROM node:18-alpine AS build
 
 WORKDIR /app
 
-COPY package.json* ./
+COPY package*.json ./
 
 RUN npm install
 
+#Copy Everything
 COPY . .
 
-# Production stage
+RUN npm run build
+
+#Production stage
 FROM nginx:alpine
 
-# COPY The final Artifact From Builder Stage
+#Copy the Final Artifact from the Builder stage 
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 
-CMD [ "nginx" , "-g" , "daemon off;" ]
+#Run this when the Container Starts
+CMD ["nginx", "-g", "daemon off;"]
