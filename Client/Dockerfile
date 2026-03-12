@@ -1,10 +1,12 @@
 #Builder stage
 FROM node:20-alpine AS build
 
+#Working directory inside the image 
 WORKDIR /app
 
 COPY package*.json ./
 
+#Execute commands to build your image (example install software)
 RUN npm install
 
 RUN npm install -D @tailwindcss/postcss
