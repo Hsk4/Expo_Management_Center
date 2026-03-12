@@ -66,8 +66,7 @@ const BackgroundScene = () => {
             size: 0.1,
             sizeAttenuation: true,
             map: texture,
-            transparent: true,
-            sizeAttenuation: true
+            transparent: true
         })
 
         const particles = new THREE.Points(geometry, material)

@@ -1,3 +1,5 @@
+import { Navigate } from "react-router-dom"
+import { useAuth } from "../../../contexts/Auth.context"
 import HeroSection from "../components/HeroSection.component"
 import AboutSection from "../components/AboutSection.component"
 import GallerySection from "../components/GallerySection.component"
@@ -5,7 +7,15 @@ import SupportSection from "../components/Support.component"
 import Footer from "../../../components/common/Footer"
 import Reveal from "../../../components/ui/Reveal"
 import ShowcaseSection from "../components/ShowcaseSection.component"
+
 const HomePage = () => {
+    const { user } = useAuth()
+
+    // Redirect logged-in admins directly to their dashboard
+    if (user?.role === "admin") {
+        return <Navigate to="/admin/dashboard" replace />
+    }
+
     return (
         <div className="w-full">
 

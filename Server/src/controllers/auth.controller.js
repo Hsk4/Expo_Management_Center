@@ -7,49 +7,64 @@ exports.register = async (req, res) => {
     try {
         const {name, email, password, role} = req.body;
 
-        // check if user already exists
-        const existingUser = await User.findOne ({email});
-        if(existingUser){
-            return res.status(400).json({message : "Email already in use", success: false});
+        // Validate required fields
+        if (!name || !email || !password) {
+            return res.status(400).json({
+                message: "Please provide all required fields: name, email, password",
+                success: false
+            });
         }
 
-        // then create user object
+        // Check if user already exists
+        const existingUser = await User.findOne({email});
+        if (existingUser) {
+            return res.status(400).json({
+                message: "User with this email already exists",
+                success: false
+            });
+        }
 
-        const user = await User.create ({
+        // Create new user
+        const user = await User.create({
             name,
             email,
             password,
-            role,
+            role: role || "attendee"
         });
 
-        // send welcome email
-        sendWelcomeEmail(user).catch((err) => {
-            console.log("Error sending email",err);
+        // Send welcome email (non-blocking, don't fail registration if email fails)
+        setImmediate(async () => {
+            try {
+                await sendWelcomeEmail(user);
+            } catch (emailError) {
+                console.error("Failed to send welcome email:", emailError.message);
+            }
         });
 
-        // generate the token
-
+        // Generate token
         const token = generateToken(user);
 
+        // Return user data (without password)
         res.status(201).json({
-            message : "User registered successfully",
-            success : true,
+            message: "User registered successfully",
+            success: true,
             token,
-            user:{
+            user: {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role,
+                role: user.role
             }
         });
-    }
-    catch (error) {
+
+    } catch (error) {
+        console.error("Registration Error:", error);
         res.status(500).json({
-            success: false,
-            message : error.message,
-        })
+            message: error.message || "Error registering user",
+            success: false
+        });
     }
-}
+};
 
 // LOGIN USER
 

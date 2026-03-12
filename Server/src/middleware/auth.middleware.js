@@ -19,7 +19,7 @@ exports.protect = async (req, res, next) => {
             return res.status(401).json({message : "Not authorized, user not found", success : false});
         }
         // attach user to request
-        req.user = User;
+        req.user = user;
         next();
 
     }catch(error) {
