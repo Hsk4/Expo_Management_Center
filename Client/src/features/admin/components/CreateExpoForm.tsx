@@ -4,8 +4,9 @@
 
 import { useState } from "react";
 import { Icon } from "./Icons";
-import { createExpo, type CreateExpoData, type ExpoLayoutConfig } from "../../../services/expo.service";
+import { createExpo, type CreateExpoData, type ExpoLayoutConfig, type ExpoSession } from "../../../services/expo.service";
 import { LayoutBuilderPanel } from "./LayoutBuilderPanel";
+import { ExpoSessionsEditor } from "./ExpoSessionsEditor";
 
 interface CreateExpoFormProps {
   onExpoCreated: () => void;
@@ -22,6 +23,7 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
   const [fieldErrors, setFieldErrors] = useState<FieldError>({});
   const [showLayoutBuilder, setShowLayoutBuilder] = useState(false);
   const [layoutConfig, setLayoutConfig] = useState<ExpoLayoutConfig | null>(null);
+  const [sessions, setSessions] = useState<ExpoSession[]>([]);
 
   const [formData, setFormData] = useState<CreateExpoData>({
     title: "",
@@ -135,6 +137,7 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
         gridCols: layoutConfig ? Math.max(1, formData.gridCols || 1, Math.max(...layoutConfig.booths.map((b) => b.col))) : formData.gridCols,
         maxBooths: layoutConfig ? layoutConfig.booths.length : formData.maxBooths,
         layout: layoutConfig || undefined,
+        sessions: sessions.filter((session) => session.title.trim() && session.startTime && session.endTime),
       };
 
       const response = await createExpo(payload);
@@ -153,6 +156,7 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
           gridCols: 10,
         });
         setLayoutConfig(null);
+        setSessions([]);
         setShowLayoutBuilder(false);
         setTimeout(() => {
           onExpoCreated();
@@ -453,6 +457,14 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
                 onCancel={() => setShowLayoutBuilder(false)}
               />
             )}
+          </div>
+
+          <div className="form-section">
+            <h3 className="form-section-title">04 • Schedule & Sessions</h3>
+            <p style={{ margin: "0 0 14px 0", color: "#a0a0b0", fontSize: "14px" }}>
+              Add an agenda for speakers, workshops, and stage sessions. You can still update this later while the expo is in draft.
+            </p>
+            <ExpoSessionsEditor sessions={sessions} onChange={setSessions} />
           </div>
 
           {/* Form Actions */}

@@ -23,6 +23,7 @@ export interface ExpoData {
     totalBoothsGenerated: number;
     isActive: boolean;
     layout?: ExpoLayoutConfig;
+    sessions?: ExpoSession[];
     createdBy: {
         _id: string;
         name: string;
@@ -45,6 +46,7 @@ export interface CreateExpoData {
     gridRows: number;
     gridCols: number;
     layout?: ExpoLayoutConfig;
+    sessions?: ExpoSession[];
 }
 
 export interface UpdateExpoData extends Partial<CreateExpoData> {}
@@ -98,6 +100,18 @@ export interface ExpoLayoutConfig {
     booths: ExpoLayoutBooth[];
     stagePosition?: { x: number; y: number; width: number; height: number };
     foodStallPositions?: { x: number; y: number; label: string }[];
+}
+
+export interface ExpoSession {
+    _id?: string;
+    title: string;
+    speaker?: string;
+    topic?: string;
+    location?: string;
+    description?: string;
+    startTime: string;
+    endTime: string;
+    capacity?: number;
 }
 
 // Get all expos

@@ -9,7 +9,7 @@ exports.createExpo = async (req, res) => {
     try{
         console.log('Creating expo with data:', req.body);
         console.log('User:', req.user);
-        const{title, description, theme, location, startDate, endDate, maxBooths,maxAttendees, gridRows, gridCols, layout} = req.body;
+        const{title, description, theme, location, startDate, endDate, maxBooths,maxAttendees, gridRows, gridCols, layout, sessions} = req.body;
 
         console.log('About to create expo...');
         const expo = await Expo.create({
@@ -24,6 +24,7 @@ exports.createExpo = async (req, res) => {
             gridRows,
             gridCols,
             layout: layout || undefined,
+            sessions: Array.isArray(sessions) ? sessions : [],
             totalBoothsGenerated : gridRows * gridCols,
             createdBy : req.user._id,
         });
@@ -132,6 +133,9 @@ exports.updateExpo = async (req, res) => {
         Object.assign(expo, req.body);
         if (req.body.layout) {
             expo.layout = req.body.layout;
+        }
+        if (Array.isArray(req.body.sessions)) {
+            expo.sessions = req.body.sessions;
         }
         await expo.save();
 

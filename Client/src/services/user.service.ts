@@ -1,4 +1,5 @@
 import api from './api';
+import type { ExpoSession } from './expo.service';
 
 export interface UserProfileData {
     id: string;
@@ -78,10 +79,25 @@ export interface BoothApplicationRegistration {
     };
 }
 
+export interface BookmarkedSessionRegistration {
+    expoId: {
+        _id: string;
+        title: string;
+        theme?: string;
+        location: string;
+        startDate: string;
+        endDate: string;
+        status: 'draft' | 'published' | 'completed';
+    };
+    session: ExpoSession & { _id: string };
+    bookmarkedAt: string;
+}
+
 export interface RegistrationSummary {
     attendedExpos: AttendedExpoRegistration[];
     bookedBooths: BookedBoothRegistration[];
     boothApplications: BoothApplicationRegistration[];
+    bookmarkedSessions: BookmarkedSessionRegistration[];
 }
 
 export const getCurrentUserProfile = async () => {
@@ -106,6 +122,34 @@ export const getMyRegistrations = async () => {
     return response.data as {
         success: boolean;
         data: RegistrationSummary;
+    };
+};
+
+export const getMySessionBookmarks = async (expoId?: string) => {
+    const response = await api.get('/users/me/session-bookmarks', {
+        params: expoId ? { expoId } : undefined,
+    });
+    return response.data as {
+        success: boolean;
+        data: BookmarkedSessionRegistration[];
+    };
+};
+
+export const addSessionBookmark = async (expoId: string, sessionId: string) => {
+    const response = await api.post('/users/me/session-bookmarks', { expoId, sessionId });
+    return response.data as {
+        success: boolean;
+        message: string;
+    };
+};
+
+export const removeSessionBookmark = async (expoId: string, sessionId: string) => {
+    const response = await api.delete(`/users/me/session-bookmarks/${sessionId}`, {
+        params: { expoId },
+    });
+    return response.data as {
+        success: boolean;
+        message: string;
     };
 };
 

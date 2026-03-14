@@ -4,8 +4,9 @@
 
 import { useState } from "react";
 import { Icon } from "./Icons";
-import { publishExpo, deleteExpo, type ExpoData } from "../../../services/expo.service";
+import { publishExpo, deleteExpo, updateExpo, type ExpoData, type ExpoSession } from "../../../services/expo.service";
 import { formatDate } from "../utils/expoHelpers";
+import { ExpoSessionsEditor } from "./ExpoSessionsEditor";
 
 interface DraftedExposViewProps {
   expos: ExpoData[];
@@ -16,6 +17,8 @@ export function DraftedExposView({ expos, onExpoUpdated }: DraftedExposViewProps
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [editingScheduleExpoId, setEditingScheduleExpoId] = useState<string | null>(null);
+  const [scheduleDraft, setScheduleDraft] = useState<ExpoSession[]>([]);
 
   // Filter only draft expos
   const draftedExpos = expos.filter(expo => expo.status === "draft");
@@ -58,6 +61,36 @@ export function DraftedExposView({ expos, onExpoUpdated }: DraftedExposViewProps
       }
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to delete expo");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const openScheduleEditor = (expo: ExpoData) => {
+    setEditingScheduleExpoId(expo._id);
+    setScheduleDraft(expo.sessions || []);
+    setError("");
+    setSuccess("");
+  };
+
+  const handleSaveSchedule = async (expoId: string) => {
+    setLoading(expoId);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await updateExpo(expoId, {
+        sessions: scheduleDraft.filter((session) => session.title.trim() && session.startTime && session.endTime),
+      });
+
+      if (response.success) {
+        setSuccess("Schedule updated successfully!");
+        setEditingScheduleExpoId(null);
+        setScheduleDraft([]);
+        onExpoUpdated();
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to update schedule");
     } finally {
       setLoading(null);
     }
@@ -153,9 +186,22 @@ export function DraftedExposView({ expos, onExpoUpdated }: DraftedExposViewProps
                     <span className="draft-card-label">Created:</span>
                     <span className="draft-card-value">{formatDate(expo.createdAt)}</span>
                   </div>
+
+                  <div className="draft-card-row">
+                    <span className="draft-card-label">Sessions:</span>
+                    <span className="draft-card-value">{expo.sessions?.length || 0} added</span>
+                  </div>
                 </div>
 
                 <div className="draft-card-actions">
+                  <button
+                    onClick={() => openScheduleEditor(expo)}
+                    disabled={loading === expo._id}
+                    className="btn-secondary"
+                    title="Edit draft schedule"
+                  >
+                    Schedule
+                  </button>
                   <button
                     onClick={() => handlePublish(expo._id)}
                     disabled={loading === expo._id}
@@ -175,6 +221,33 @@ export function DraftedExposView({ expos, onExpoUpdated }: DraftedExposViewProps
                     Delete
                   </button>
                 </div>
+
+                {editingScheduleExpoId === expo._id && (
+                  <div style={{ marginTop: "18px", paddingTop: "18px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                    <h4 style={{ margin: "0 0 8px 0", color: "white", fontSize: "16px" }}>Manage Schedule</h4>
+                    <p style={{ margin: "0 0 14px 0", color: "#a0a0b0", fontSize: "13px" }}>
+                      Update this draft agenda before publishing the expo.
+                    </p>
+
+                    <ExpoSessionsEditor sessions={scheduleDraft} onChange={setScheduleDraft} />
+
+                    <div style={{ display: "flex", gap: "10px", marginTop: "14px", flexWrap: "wrap" }}>
+                      <button className="btn-publish" disabled={loading === expo._id} onClick={() => handleSaveSchedule(expo._id)}>
+                        {loading === expo._id ? "Saving..." : "Save schedule"}
+                      </button>
+                      <button
+                        className="btn-secondary"
+                        type="button"
+                        onClick={() => {
+                          setEditingScheduleExpoId(null);
+                          setScheduleDraft([]);
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

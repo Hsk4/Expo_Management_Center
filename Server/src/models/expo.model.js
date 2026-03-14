@@ -11,6 +11,47 @@ const layoutBoothSchema = new mongoose.Schema({
     },
 }, { _id: false });
 
+const sessionSchema = new mongoose.Schema({
+    title: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+    speaker: {
+        type: String,
+        trim: true,
+        default: "",
+    },
+    topic: {
+        type: String,
+        trim: true,
+        default: "",
+    },
+    location: {
+        type: String,
+        trim: true,
+        default: "",
+    },
+    description: {
+        type: String,
+        trim: true,
+        default: "",
+    },
+    startTime: {
+        type: Date,
+        required: true,
+    },
+    endTime: {
+        type: Date,
+        required: true,
+    },
+    capacity: {
+        type: Number,
+        min: [1, "Session capacity must be at least 1"],
+        default: 50,
+    },
+});
+
 const expoSchema = new mongoose.Schema({
     title : {
         type : String,
@@ -103,6 +144,10 @@ const expoSchema = new mongoose.Schema({
             default: [],
         },
     },
+    sessions: {
+        type: [sessionSchema],
+        default: [],
+    },
     createdBy : {
         type : mongoose.Schema.Types.ObjectId,
         ref : "User",
@@ -127,6 +172,14 @@ expoSchema.pre('save', async function() {
     const gridCapacity = this.gridRows * this.gridCols;
     if(this.maxBooths > gridCapacity){
         throw new Error(`Max booths cannot exceed grid capacity of ${gridCapacity}`);
+    }
+
+    if (Array.isArray(this.sessions)) {
+        this.sessions.forEach((session) => {
+            if (session.endTime <= session.startTime) {
+                throw new Error(`Session \"${session.title}\" must end after it starts`);
+            }
+        });
     }
 });
 

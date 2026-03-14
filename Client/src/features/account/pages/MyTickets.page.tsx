@@ -7,6 +7,7 @@ const emptySummary: RegistrationSummary = {
     attendedExpos: [],
     bookedBooths: [],
     boothApplications: [],
+    bookmarkedSessions: [],
 };
 
 const formatDate = (value: string) =>
@@ -79,6 +80,7 @@ const MyTicketsPage = () => {
         booked: summary.bookedBooths.length,
         applications: summary.boothApplications.length,
         pendingApplications: summary.boothApplications.filter((item) => item.status === 'pending').length,
+        savedSessions: summary.bookmarkedSessions.length,
     }), [summary]);
 
     return (
@@ -101,12 +103,13 @@ const MyTicketsPage = () => {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
                     {[
                         { label: 'Attended expos', value: stats.attended },
                         { label: 'Booked booths', value: stats.booked },
                         { label: 'Applications', value: stats.applications },
                         { label: 'Pending review', value: stats.pendingApplications },
+                        { label: 'Saved sessions', value: stats.savedSessions },
                     ].map((card) => (
                         <div key={card.label} className="rounded-2xl border border-white/10 bg-white/5 p-5">
                             <p className="text-sm text-[#a0a0b0]">{card.label}</p>
@@ -135,7 +138,7 @@ const MyTicketsPage = () => {
                             </div>
 
                             {summary.attendedExpos.length === 0 ? (
-                                <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-6 text-[#a0a0b0]">
+                                <div className="rounded-2xl border border-dashed border-white/10 bg-white/3 p-6 text-[#a0a0b0]">
                                     You have not registered for an expo yet.
                                 </div>
                             ) : (
@@ -169,6 +172,52 @@ const MyTicketsPage = () => {
                             )}
                         </section>
 
+                        <section className="space-y-4">
+                            <div className="flex items-center justify-between gap-4">
+                                <div>
+                                    <h2 className="text-2xl font-semibold text-white">Saved sessions</h2>
+                                    <p className="text-sm text-[#a0a0b0]">Your bookmarked schedule items and reminders.</p>
+                                </div>
+                            </div>
+
+                            {summary.bookmarkedSessions.length === 0 ? (
+                                <div className="rounded-2xl border border-dashed border-white/10 bg-white/3 p-6 text-[#a0a0b0]">
+                                    You have not bookmarked any sessions yet.
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                    {summary.bookmarkedSessions.map((entry) => (
+                                        <div key={`${entry.expoId._id}-${entry.session._id}`} className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div>
+                                                    <h3 className="text-white font-semibold">{entry.session.title}</h3>
+                                                    <p className="text-sm text-[#a0a0b0]">{entry.expoId.title}</p>
+                                                </div>
+                                                <span className="text-xs px-3 py-1 rounded-full border bg-[#36d399]/15 border-[#36d399]/30 text-[#86efac]">
+                                                    Bookmarked
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-[#d4d4d8]">
+                                                {entry.session.speaker ? `${entry.session.speaker} • ` : ''}
+                                                {entry.session.topic || 'Session'}
+                                            </p>
+                                            <p className="text-sm text-[#a0a0b0]">
+                                                {formatDate(entry.session.startTime)} • {entry.session.location || 'Location TBD'}
+                                            </p>
+                                            <div className="flex gap-3 flex-wrap">
+                                                <button
+                                                    onClick={() => navigate(`/expo/${entry.expoId._id}/floor`)}
+                                                    className="px-4 py-2 rounded-xl bg-[#4c9aff]/15 border border-[#4c9aff]/30 text-[#93c5fd] hover:bg-[#4c9aff]/25 transition"
+                                                >
+                                                    Open expo schedule
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+
                         {user?.role === 'exhibitor' && (
                             <>
                                 <section className="space-y-4">
@@ -178,7 +227,7 @@ const MyTicketsPage = () => {
                                     </div>
 
                                     {summary.bookedBooths.length === 0 ? (
-                                        <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-6 text-[#a0a0b0]">
+                                        <div className="rounded-2xl border border-dashed border-white/10 bg-white/3 p-6 text-[#a0a0b0]">
                                             You have no booked booths yet.
                                         </div>
                                     ) : (
