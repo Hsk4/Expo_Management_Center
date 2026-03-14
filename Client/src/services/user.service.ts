@@ -93,6 +93,25 @@ export interface BookmarkedSessionRegistration {
     bookmarkedAt: string;
 }
 
+export interface SupportRequestItem {
+    _id: string;
+    role: 'attendee' | 'exhibitor' | 'admin';
+    type: 'support' | 'feedback';
+    subject: string;
+    message: string;
+    status: 'open' | 'in-review' | 'resolved';
+    expoId?: {
+        _id: string;
+        title: string;
+        location: string;
+        startDate: string;
+        endDate: string;
+        status: 'draft' | 'published' | 'completed';
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface RegistrationSummary {
     attendedExpos: AttendedExpoRegistration[];
     bookedBooths: BookedBoothRegistration[];
@@ -150,6 +169,28 @@ export const removeSessionBookmark = async (expoId: string, sessionId: string) =
     return response.data as {
         success: boolean;
         message: string;
+    };
+};
+
+export const getMySupportRequests = async () => {
+    const response = await api.get('/users/me/support-requests');
+    return response.data as {
+        success: boolean;
+        data: SupportRequestItem[];
+    };
+};
+
+export const submitSupportRequest = async (payload: {
+    type: 'support' | 'feedback';
+    subject: string;
+    message: string;
+    expoId?: string;
+}) => {
+    const response = await api.post('/users/me/support-requests', payload);
+    return response.data as {
+        success: boolean;
+        message: string;
+        data: SupportRequestItem;
     };
 };
 

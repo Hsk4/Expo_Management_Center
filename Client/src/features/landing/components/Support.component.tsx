@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom"
+import { useAuth } from "../../../contexts/Auth.context"
 
 const SupportSection = () => {
+    const { user } = useAuth()
+    const canAccessSupport = user?.role === "attendee" || user?.role === "exhibitor"
+
     return (
         <div className="max-w-6xl mx-auto px-6">
 
@@ -49,19 +53,39 @@ const SupportSection = () => {
                 </p>
 
                 <div className="flex flex-col md:flex-row justify-center gap-6">
-                    <Link
-                        to="/attendee/register"
-                        className="px-8 py-3 rounded-xl bg-white text-black font-semibold hover:bg-neutral-200 transition"
-                    >
-                        Create Account
-                    </Link>
+                    {canAccessSupport ? (
+                        <>
+                            <Link
+                                to="/support"
+                                className="px-8 py-3 rounded-xl bg-white text-black font-semibold hover:bg-neutral-200 transition"
+                            >
+                                Open Support Center
+                            </Link>
 
-                    <Link
-                        to="/exhibitor/login"
-                        className="px-8 py-3 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 transition"
-                    >
-                        Exhibitor Login
-                    </Link>
+                            <Link
+                                to="/my-tickets"
+                                className="px-8 py-3 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 transition"
+                            >
+                                View My Activity
+                            </Link>
+                        </>
+                    ) : (
+                        <>
+                            <Link
+                                to="/attendee/register"
+                                className="px-8 py-3 rounded-xl bg-white text-black font-semibold hover:bg-neutral-200 transition"
+                            >
+                                Create Account
+                            </Link>
+
+                            <Link
+                                to="/exhibitor/login"
+                                className="px-8 py-3 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 transition"
+                            >
+                                Exhibitor Login
+                            </Link>
+                        </>
+                    )}
                 </div>
             </div>
 

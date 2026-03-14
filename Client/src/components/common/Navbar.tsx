@@ -189,6 +189,16 @@ const Navbar = () => {
                                         >
                                             My tickets & registrations
                                         </button>
+
+                                        <button
+                                            onClick={() => {
+                                                setShowProfileDropdown(false)
+                                                navigate("/support")
+                                            }}
+                                            className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-white/10 transition"
+                                        >
+                                            Support & feedback
+                                        </button>
                                     </div>
 
                                     <div className="border-t border-white/10 px-4 py-3">
@@ -307,6 +317,15 @@ const Navbar = () => {
                                     className="block w-full text-left px-4 py-2 rounded-lg hover:bg-white/10"
                                 >
                                     My tickets & registrations
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        navigate("/support")
+                                        setIsOpen(false)
+                                    }}
+                                    className="block w-full text-left px-4 py-2 rounded-lg hover:bg-white/10"
+                                >
+                                    Support & feedback
                                 </button>
                                 <button
                                     onClick={handleLogout}

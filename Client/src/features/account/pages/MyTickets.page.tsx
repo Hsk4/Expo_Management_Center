@@ -129,12 +129,20 @@ const MyTicketsPage = () => {
                                     <h2 className="text-2xl font-semibold text-white">Expo attendance</h2>
                                     <p className="text-sm text-[#a0a0b0]">Events you have already registered for or attended.</p>
                                 </div>
-                                <button
-                                    onClick={() => navigate('/expos')}
-                                    className="px-4 py-2 rounded-xl border border-white/10 text-white hover:bg-white/5 transition"
-                                >
-                                    Browse expos
-                                </button>
+                                <div className="flex gap-3 flex-wrap">
+                                    <button
+                                        onClick={() => navigate('/support')}
+                                        className="px-4 py-2 rounded-xl border border-white/10 text-white hover:bg-white/5 transition"
+                                    >
+                                        Need help?
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/expos')}
+                                        className="px-4 py-2 rounded-xl border border-white/10 text-white hover:bg-white/5 transition"
+                                    >
+                                        Browse expos
+                                    </button>
+                                </div>
                             </div>
 
                             {summary.attendedExpos.length === 0 ? (

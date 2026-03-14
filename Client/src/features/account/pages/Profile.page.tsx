@@ -289,6 +289,13 @@ const ProfilePage = () => {
                                 <div className="flex flex-wrap gap-3 justify-end">
                                     <button
                                         type="button"
+                                        onClick={() => navigate('/support')}
+                                        className="px-5 py-3 rounded-xl border border-white/10 text-white hover:bg-white/5 transition"
+                                    >
+                                        Support & feedback
+                                    </button>
+                                    <button
+                                        type="button"
                                         onClick={() => navigate('/my-tickets')}
                                         className="px-5 py-3 rounded-xl border border-white/10 text-white hover:bg-white/5 transition"
                                     >
