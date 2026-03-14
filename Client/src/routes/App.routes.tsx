@@ -15,6 +15,8 @@ import AdminDashboardPage from "../features/admin/pages/Dashboard.page.tsx";
 import ExhibitorDashboardPage from "../features/exhibitor/pages/Dashboard.page.tsx"
 import ExhibitorBoothBookingPage from "../features/exhibitor/pages/BoothBooking.page.tsx"
 import ExpoFloorViewPage from "../features/attendee/pages/ExpoFloorView.page.tsx"
+import ProfilePage from "../features/account/pages/Profile.page.tsx"
+import MyTicketsPage from "../features/account/pages/MyTickets.page.tsx"
 
 const AppRoutes = () => {
     return (
@@ -41,9 +43,7 @@ const AppRoutes = () => {
                     path="/profile"
                     element={
                         <ProtectedRoute allowedRoles={["attendee", "exhibitor"]}>
-                            <div className="min-h-screen flex items-center justify-center">
-                                <h1 className="text-3xl text-white">Profile Settings - Coming Soon</h1>
-                            </div>
+                            <ProfilePage />
                         </ProtectedRoute>
                     }
                 />
@@ -51,9 +51,7 @@ const AppRoutes = () => {
                     path="/my-tickets"
                     element={
                         <ProtectedRoute allowedRoles={["attendee", "exhibitor"]}>
-                            <div className="min-h-screen flex items-center justify-center">
-                                <h1 className="text-3xl text-white">My Tickets - Coming Soon</h1>
-                            </div>
+                            <MyTicketsPage />
                         </ProtectedRoute>
                     }
                 />

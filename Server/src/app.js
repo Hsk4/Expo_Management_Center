@@ -8,6 +8,7 @@ const authRoutes = require('./routes/auth.routes');
 const app = express();
 const adminRoutes = require('./routes/admin.routes');
 const expoRoutes = require('./routes/expo.routes');
+const userRoutes = require('./routes/user.routes');
 // security headers
 app.use(helmet());
 
@@ -39,4 +40,5 @@ app.get("/api/health", (req, res)=> {
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/expos', expoRoutes);
+app.use('/api/users', userRoutes);
 module.exports = app;
