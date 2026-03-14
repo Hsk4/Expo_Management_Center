@@ -28,6 +28,7 @@ const ExpoFloor2D = ({
     const [expandedBooth, setExpandedBooth] = useState<BoothData | null>(null)
     const [showApplicationModal, setShowApplicationModal] = useState(false)
     const [hoveredBoothId, setHoveredBoothId] = useState<string | null>(null)
+    const [companySearch, setCompanySearch] = useState("")
 
     const companiesAttending = useMemo(() => {
         const companyMap = new Map<string, BoothData>();
@@ -39,6 +40,19 @@ const ExpoFloor2D = ({
             });
         return Array.from(companyMap.values());
     }, [booths]);
+
+    const filteredCompanies = useMemo(() => {
+        const q = companySearch.trim().toLowerCase()
+        if (!q) return companiesAttending
+        return companiesAttending.filter((b) => {
+            const d = b.exhibitorDetails
+            return (
+                d?.companyName?.toLowerCase().includes(q) ||
+                d?.description?.toLowerCase().includes(q) ||
+                d?.contactName?.toLowerCase().includes(q)
+            )
+        })
+    }, [companiesAttending, companySearch])
 
     const getBoothForCell = (row: number, col: number) => {
         return booths.find((booth) => booth.row === row && booth.col === col) || null
@@ -182,23 +196,71 @@ const ExpoFloor2D = ({
 
             {/* Companies Attending */}
             <div className="mt-8">
-                <h3 className="text-lg font-semibold text-white mb-3">Companies Attending</h3>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                    <h3 className="text-lg font-semibold text-white">
+                        Companies Attending
+                        {companiesAttending.length > 0 && (
+                            <span className="ml-2 text-sm font-normal text-[#707085]">
+                                ({filteredCompanies.length} / {companiesAttending.length})
+                            </span>
+                        )}
+                    </h3>
+                    {companiesAttending.length > 0 && (
+                        <div className="relative">
+                            <svg
+                                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#707085] pointer-events-none"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                    d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                            </svg>
+                            <input
+                                type="text"
+                                value={companySearch}
+                                onChange={(e) => setCompanySearch(e.target.value)}
+                                placeholder="Search companies…"
+                                className="pl-9 pr-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-[#707085] focus:outline-none focus:border-[#4c9aff]/50 w-56 transition"
+                            />
+                            {companySearch && (
+                                <button
+                                    onClick={() => setCompanySearch("")}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#707085] hover:text-white transition"
+                                    aria-label="Clear search"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
+
                 {companiesAttending.length === 0 ? (
                     <p className="text-sm text-[#707085]">No approved companies yet.</p>
+                ) : filteredCompanies.length === 0 ? (
+                    <p className="text-sm text-[#707085]">No companies match your search.</p>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {companiesAttending.map((booth) => (
-                            <div key={`company-${booth._id}`} className="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
-                                {booth.exhibitorDetails?.bannerImage && (
+                        {filteredCompanies.map((booth) => (
+                            <div key={`company-${booth._id}`} className="flex flex-col rounded-lg border border-white/10 bg-white/5 overflow-hidden hover:border-white/20 transition">
+                                {booth.exhibitorDetails?.bannerImage ? (
                                     <img
                                         src={booth.exhibitorDetails.bannerImage}
                                         alt={booth.exhibitorDetails.companyName}
                                         className="w-full h-24 object-cover"
                                     />
+                                ) : (
+                                    <div className="w-full h-24 bg-gradient-to-br from-[#1a1a2e] to-[#16213e] flex items-center justify-center">
+                                        <span className="text-3xl">🏢</span>
+                                    </div>
                                 )}
-                                <div className="p-3 space-y-2">
-                                    <p className="text-white font-semibold">{booth.exhibitorDetails?.companyName}</p>
-                                    <p className="text-xs text-[#a0a0b0]">Booth {booth.boothNumber}</p>
+                                <div className="flex flex-col flex-1 p-3 space-y-2">
+                                    <p className="text-white font-semibold leading-tight">{booth.exhibitorDetails?.companyName}</p>
+                                    {booth.exhibitorDetails?.description && (
+                                        <p className="text-xs text-[#a0a0b0] line-clamp-2 leading-relaxed">{booth.exhibitorDetails.description}</p>
+                                    )}
+                                    <p className="text-xs text-[#707085]">Booth {booth.boothNumber}</p>
                                     <div className="flex flex-wrap gap-2 text-xs">
                                         {booth.exhibitorDetails?.website && (
                                             <a href={booth.exhibitorDetails.website} target="_blank" rel="noreferrer" className="text-[#4c9aff] underline">Website</a>
@@ -210,6 +272,12 @@ const ExpoFloor2D = ({
                                             <a href={booth.exhibitorDetails.instagram} target="_blank" rel="noreferrer" className="text-[#4c9aff] underline">Instagram</a>
                                         )}
                                     </div>
+                                    <button
+                                        onClick={() => setExpandedBooth(booth)}
+                                        className="mt-auto pt-2 w-full text-xs text-[#93c5fd] border border-[#4c9aff]/20 rounded-lg py-1.5 hover:bg-[#4c9aff]/10 transition"
+                                    >
+                                        View Details
+                                    </button>
                                 </div>
                             </div>
                         ))}
