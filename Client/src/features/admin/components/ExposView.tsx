@@ -41,6 +41,7 @@ export function ExposView({ expos }: ExposViewProps) {
                 <th>Expo Name</th>
                 <th>Theme</th>
                 <th>Status</th>
+                <th>Entry Fee</th>
                 <th>Date</th>
                 <th>Location</th>
                 <th>Attendees</th>
@@ -54,6 +55,7 @@ export function ExposView({ expos }: ExposViewProps) {
                     <td><span className="cell-strong">{expo.title}</span></td>
                     <td><span className="cell-dim">{expo.theme || "—"}</span></td>
                     <td><span className={`badge badge-${expo.displayStatus}`}>{expo.displayStatus}</span></td>
+                    <td><span className="cell-dim">${((expo.paymentAmount ?? 499) / 100).toFixed(2)}</span></td>
                     <td><span className="cell-date"><Icon.Calendar /> {formatDate(expo.startDate)}</span></td>
                     <td><span className="cell-dim">{expo.location}</span></td>
                     <td><span className="cell-number">{expo.attendeesRegisteredCount > 0 ? expo.attendeesRegisteredCount.toLocaleString() : "—"}</span></td>
@@ -62,7 +64,7 @@ export function ExposView({ expos }: ExposViewProps) {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "40px", color: "var(--text-dim)" }}>
+                  <td colSpan={8} style={{ textAlign: "center", padding: "40px", color: "var(--text-dim)" }}>
                     No expos found
                   </td>
                 </tr>

@@ -36,6 +36,7 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
     maxAttendees: 0,
     gridRows: 10,
     gridCols: 10,
+    paymentAmount: 499,
   });
 
   const handleInputChange = (
@@ -45,7 +46,7 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
 
     setFormData(prev => ({
       ...prev,
-      [name]: name === "maxBooths" || name === "maxAttendees" || name === "gridRows" || name === "gridCols"
+      [name]: name === "maxBooths" || name === "maxAttendees" || name === "gridRows" || name === "gridCols" || name === "paymentAmount"
         ? parseInt(value) || 0
         : value,
     }));
@@ -83,6 +84,9 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
         return "";
       case "maxAttendees":
         if (value < 0) return "Must be 0 or positive";
+        return "";
+      case "paymentAmount":
+        if (value < 0) return "Payment amount must be 0 or positive";
         return "";
       default:
         return "";
@@ -379,7 +383,16 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
 
           {/* Capacity Section */}
           <div className="form-section">
-            <h3 className="form-section-title">03 • Capacity & Layout</h3>
+            <h3 className="form-section-title">03 • Pricing, Capacity & Layout</h3>
+
+            {renderFieldWithError(
+              "paymentAmount",
+              "Entry Fee (in cents)",
+              "number",
+              "499",
+              false,
+              "Fixed amount charged to attendees/exhibitors for this expo"
+            )}
 
             <div className="form-row">
               {renderFieldWithError(

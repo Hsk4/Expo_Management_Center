@@ -96,6 +96,34 @@ export function DraftedExposView({ expos, onExpoUpdated }: DraftedExposViewProps
     }
   };
 
+  const handleSetEntryFee = async (expo: ExpoData) => {
+    const current = expo.paymentAmount ?? 499;
+    const next = window.prompt("Set entry fee in cents", String(current));
+    if (next === null) return;
+
+    const parsed = Number(next);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      setError("Entry fee must be a non-negative number");
+      return;
+    }
+
+    setLoading(expo._id);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await updateExpo(expo._id, { paymentAmount: Math.round(parsed) });
+      if (response.success) {
+        setSuccess("Entry fee updated successfully");
+        onExpoUpdated();
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to update entry fee");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -175,6 +203,11 @@ export function DraftedExposView({ expos, onExpoUpdated }: DraftedExposViewProps
                     </span>
                   </div>
 
+                  <div className="draft-card-row">
+                    <span className="draft-card-label">Entry fee:</span>
+                    <span className="draft-card-value">${((expo.paymentAmount ?? 499) / 100).toFixed(2)}</span>
+                  </div>
+
                   {expo.description && (
                     <div className="draft-card-row">
                       <span className="draft-card-label">Description:</span>
@@ -194,6 +227,14 @@ export function DraftedExposView({ expos, onExpoUpdated }: DraftedExposViewProps
                 </div>
 
                 <div className="draft-card-actions">
+                  <button
+                    onClick={() => handleSetEntryFee(expo)}
+                    disabled={loading === expo._id}
+                    className="btn-secondary"
+                    title="Set entry fee"
+                  >
+                    Fee
+                  </button>
                   <button
                     onClick={() => openScheduleEditor(expo)}
                     disabled={loading === expo._id}

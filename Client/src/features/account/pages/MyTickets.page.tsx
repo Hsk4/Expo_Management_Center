@@ -19,6 +19,8 @@ const formatDate = (value: string) =>
         year: 'numeric',
     });
 
+const formatCurrencyFromCents = (amount = 499) => `$${(amount / 100).toFixed(2)}`;
+
 const getStatusClasses = (status: string) => {
     if (status === 'approved' || status === 'published') return 'bg-[#36d399]/15 border-[#36d399]/30 text-[#86efac]';
     if (status === 'pending' || status === 'draft') return 'bg-[#fbbf24]/15 border-[#fbbf24]/30 text-[#fcd34d]';
@@ -53,6 +55,7 @@ const ApplicationCard = ({
             <p>Payment: {application.paymentStatus || 'unpaid'}</p>
             {application.paidAt ? <p>Paid on: {formatDate(application.paidAt)}</p> : <p>Payment pending</p>}
         </div>
+        <p className="text-sm text-[#a0a0b0]">Fee: {formatCurrencyFromCents(application.paymentAmount || 499)}</p>
         {application.status === 'pending' && application.paymentStatus !== 'paid' && (
             <button
                 onClick={() => onPay(application._id)}
@@ -76,6 +79,11 @@ const MyTicketsPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [paymentApplicationId, setPaymentApplicationId] = useState<string | null>(null);
+
+    const selectedApplication = useMemo(
+        () => summary.boothApplications.find((app) => app._id === paymentApplicationId) || null,
+        [summary.boothApplications, paymentApplicationId]
+    );
 
     const loadRegistrations = async () => {
         try {
@@ -321,7 +329,7 @@ const MyTicketsPage = () => {
             {paymentApplicationId && (
                 <PaymentSimulationModal
                     title="Complete booth payment"
-                    subtitle={`Fee: $${summary.boothApplications.find(a => a._id === paymentApplicationId)?.paymentAmount ? (summary.boothApplications.find(a => a._id === paymentApplicationId)!.paymentAmount! / 100).toFixed(2) : '4.99'}`}
+                    subtitle={`Fee: ${formatCurrencyFromCents(selectedApplication?.paymentAmount || 499)}`}
                     ctaLabel="Pay and allot booth"
                     onClose={() => setPaymentApplicationId(null)}
                     onConfirm={handleApplicationPayment}
