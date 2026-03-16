@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMyRegistrations, getMySupportRequests, submitSupportRequest, type RegistrationSummary, type SupportRequestItem } from '../../../services/user.service';
 
+// @ts-ignore
 const emptySummary: RegistrationSummary = {
 	attendedExpos: [],
 	bookedBooths: [],

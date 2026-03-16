@@ -15,6 +15,8 @@ type AppStatus = "pending" | "approved" | "rejected" | "all";
 interface BoothApplicationRow {
   _id: string;
   status: "pending" | "approved" | "rejected";
+  paymentStatus?: "unpaid" | "paid";
+  paymentReference?: string;
   submittedAt: string;
   rejectionReason?: string;
   companyProfile?: { companyName?: string };
@@ -114,6 +116,7 @@ export function ApplicationsView() {
                   <th>Company</th>
                   <th>Expo</th>
                   <th>Booth</th>
+                  <th>Payment</th>
                   <th>Applied On</th>
                   <th>Status</th>
                   <th>Actions</th>
@@ -122,7 +125,7 @@ export function ApplicationsView() {
               <tbody>
                 {visibleRows.length === 0 ? (
                   <tr>
-                    <td colSpan={7} style={{ textAlign: "center", padding: "20px" }}>
+                    <td colSpan={8} style={{ textAlign: "center", padding: "20px" }}>
                       No applications found for this filter.
                     </td>
                   </tr>
@@ -139,6 +142,11 @@ export function ApplicationsView() {
                         <span className="cell-soft">
                           {app.boothId?.boothNumber || "-"}
                           {app.boothId?.row && app.boothId?.col ? ` (R${app.boothId.row}C${app.boothId.col})` : ""}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge ${app.paymentStatus === "paid" ? "badge-approved" : "badge-pending"}`}>
+                          {app.paymentStatus || "unpaid"}
                         </span>
                       </td>
                       <td><span className="cell-date"><Icon.Calendar /> {new Date(app.submittedAt).toLocaleDateString()}</span></td>

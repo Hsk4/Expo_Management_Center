@@ -3,6 +3,8 @@ const Booth = require('../models/booth.model');
 const Expo = require('../models/expo.model');
 const User = require('../models/user.model');
 
+const createPaymentReference = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+
 // @desc    Submit booth application
 // @route   POST /api/expos/:expoId/booths/:boothId/apply
 // @access  Private (exhibitor)
@@ -52,16 +54,110 @@ exports.submitApplication = async (req, res) => {
             boothId,
             exhibitorId,
             companyProfile,
-            answers
+            answers,
+            paymentStatus: 'unpaid',
+            paymentAmount: expo.paymentAmount || 499,
         });
 
         res.status(201).json({
             success: true,
-            message: 'Application submitted successfully. Awaiting admin approval.',
+            message: 'Application submitted successfully. Complete payment to confirm booth allotment.',
             data: application
         });
     } catch (error) {
         console.error('Submit application error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// @desc    Pay for booth application and auto-allot booth
+// @route   POST /api/expos/booth-applications/:applicationId/pay
+// @access  Private (exhibitor)
+exports.payForApplication = async (req, res) => {
+    try {
+        const { applicationId } = req.params;
+        const { paymentMethod = 'card', cardNumber = '' } = req.body || {};
+
+        const application = await BoothApplication.findById(applicationId);
+        if (!application) {
+            return res.status(404).json({ success: false, message: 'Application not found' });
+        }
+
+        if (application.exhibitorId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ success: false, message: 'Not authorized to pay for this application' });
+        }
+
+        if (application.status === 'rejected') {
+            return res.status(400).json({ success: false, message: 'Rejected applications cannot be paid' });
+        }
+
+        if (application.paymentStatus === 'paid') {
+            return res.status(200).json({ success: true, message: 'Application payment already completed', data: application });
+        }
+
+        const booth = await Booth.findById(application.boothId);
+        if (!booth || booth.status !== 'available') {
+            return res.status(400).json({ success: false, message: 'Booth is no longer available' });
+        }
+
+        const exhibitorUser = await User.findById(application.exhibitorId).select('name email bookedBooths');
+        if (!exhibitorUser) {
+            return res.status(404).json({ success: false, message: 'Exhibitor not found' });
+        }
+
+        const alreadyBooked = exhibitorUser.bookedBooths.some(
+            (entry) => entry.expoId.toString() === application.expoId.toString()
+        );
+        if (alreadyBooked) {
+            return res.status(400).json({ success: false, message: 'You already have a booked booth for this expo' });
+        }
+
+        application.paymentStatus = 'paid';
+        application.paymentReference = createPaymentReference('APPPAY');
+        application.paidAt = new Date();
+        application.status = 'approved';
+        application.reviewedAt = new Date();
+        application.reviewedBy = null;
+
+        booth.status = 'booked';
+        booth.exhibitorId = application.exhibitorId;
+        booth.exhibitorDetails = {
+            companyName: application.companyProfile?.companyName || exhibitorUser.name || '',
+            contactName: exhibitorUser.name || '',
+            contactEmail: exhibitorUser.email || '',
+            bannerImage: application.companyProfile?.bannerImage || '',
+            website: application.companyProfile?.website || '',
+            linkedin: application.companyProfile?.linkedin || '',
+            instagram: application.companyProfile?.instagram || '',
+            description: application.companyProfile?.description || '',
+        };
+
+        exhibitorUser.bookedBooths.push({
+            expoId: application.expoId,
+            boothId: application.boothId,
+        });
+
+        await Promise.all([
+            application.save(),
+            booth.save(),
+            exhibitorUser.save(),
+            Expo.findByIdAndUpdate(application.expoId, { $inc: { boothsBookedCount: 1 } }),
+        ]);
+
+        res.json({
+            success: true,
+            message: 'Payment successful. Booth has been allotted.',
+            data: {
+                applicationId: application._id,
+                status: application.status,
+                paymentStatus: application.paymentStatus,
+                paymentMethod,
+                cardLast4: cardNumber ? String(cardNumber).replace(/\D/g, '').slice(-4) : '',
+                paymentReference: application.paymentReference,
+            },
+        });
+    } catch (error) {
+        console.error('Pay application error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };
@@ -108,6 +204,10 @@ exports.approveApplication = async (req, res) => {
 
         if (application.status !== 'pending') {
             return res.status(400).json({ success: false, message: 'Application has already been reviewed' });
+        }
+
+        if (application.paymentStatus !== 'paid') {
+            return res.status(400).json({ success: false, message: 'Application payment is pending' });
         }
 
         // Check if booth is still available

@@ -22,6 +22,7 @@ export interface ExpoData {
     gridCols: number;
     totalBoothsGenerated: number;
     isActive: boolean;
+    paymentAmount?: number;
     layout?: ExpoLayoutConfig;
     sessions?: ExpoSession[];
     createdBy: {
@@ -47,6 +48,7 @@ export interface CreateExpoData {
     gridCols: number;
     layout?: ExpoLayoutConfig;
     sessions?: ExpoSession[];
+    paymentAmount?: number;
 }
 
 export interface UpdateExpoData extends Partial<CreateExpoData> {}
@@ -157,8 +159,29 @@ export const getDashboardStats = async () => {
 };
 
 export const attendExpo = async (expoId: string) => {
-    const response = await api.post(`/expos/${expoId}/attend`);
+    const response = await api.post(`/expos/${expoId}/attend`, { seatsBooked: 1 });
     return response.data;
+};
+
+export interface PaymentSimulationPayload {
+    paymentMethod?: string;
+    cardNumber: string;
+    cardName: string;
+    expiry: string;
+    cvv: string;
+}
+
+export const attendExpoWithPayment = async (expoId: string, seatsBooked: number, payment: PaymentSimulationPayload) => {
+    const response = await api.post(`/expos/${expoId}/attend`, {
+        seatsBooked,
+        paymentMethod: payment.paymentMethod || 'card',
+        cardNumber: payment.cardNumber,
+    });
+    return response.data as {
+        success: boolean;
+        message: string;
+        data?: { seatsBooked: number; remainingSeats: number };
+    };
 };
 
 export const getExpoBoothGrid = async (expoId: string) => {
@@ -196,6 +219,42 @@ export interface BoothCompanyProfileInput {
     description?: string;
 }
 
+export interface BoothApplicationData {
+    _id: string;
+    status: "pending" | "approved" | "rejected";
+    paymentStatus?: "unpaid" | "paid";
+    paymentReference?: string;
+    paidAt?: string;
+    paymentAmount?: number;
+    submittedAt: string;
+    reviewedAt?: string;
+    rejectionReason?: string;
+    companyProfile?: {
+        companyName?: string;
+        bannerImage?: string;
+        website?: string;
+        linkedin?: string;
+        instagram?: string;
+        description?: string;
+    };
+    exhibitorId?: {
+        _id?: string;
+        name?: string;
+        email?: string;
+        role?: "attendee" | "exhibitor" | "admin";
+    };
+    boothId?: {
+        _id?: string;
+        boothNumber?: string;
+        row?: number;
+        col?: number;
+    };
+    expoId?: {
+        _id?: string;
+        title?: string;
+    };
+}
+
 // Submit booth application (exhibitor only)
 export const submitBoothApplication = async (
     expoId: string,
@@ -211,7 +270,11 @@ export const submitBoothApplication = async (
 export const getBoothApplications = async (expoId?: string) => {
     const url = expoId ? `/admin/booth-applications?expoId=${expoId}` : '/admin/booth-applications';
     const response = await api.get(url);
-    return response.data;
+    return response.data as {
+        success: boolean;
+        count: number;
+        data: BoothApplicationData[];
+    };
 };
 
 // Approve booth application (admin only)
@@ -225,3 +288,25 @@ export const rejectBoothApplication = async (applicationId: string, reason?: str
     const response = await api.post(`/admin/booth-applications/${applicationId}/reject`, { reason });
     return response.data;
 };
+
+export const payBoothApplication = async (applicationId: string, payment: PaymentSimulationPayload) => {
+    const response = await api.post(`/expos/booth-applications/${applicationId}/pay`, {
+        paymentMethod: payment.paymentMethod || 'card',
+        cardNumber: payment.cardNumber,
+        cardName: payment.cardName,
+        expiry: payment.expiry,
+        cvv: payment.cvv,
+    });
+    return response.data as {
+        success: boolean;
+        message: string;
+        data?: {
+            applicationId: string;
+            status: 'approved' | 'pending' | 'rejected';
+            paymentStatus: 'paid' | 'unpaid';
+            paymentReference: string;
+            cardLast4: string;
+        };
+    };
+};
+

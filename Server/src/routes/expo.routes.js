@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {protect, authorize} = require("../middleware/auth.middleware");
 const {createExpo, getAllExpos, getExpoById, updateExpo, deleteExpo,publishExpo, attendExpo, getExpoBooths, bookBooth, getAttendedHistory} = require("../controllers/expo.controller");
-const {submitApplication} = require('../controllers/boothApplication.controller');
+const { submitApplication, payForApplication } = require('../controllers/boothApplication.controller');
 
 // @route POST /api/expos
 // @desc Create a new expo
@@ -18,6 +18,11 @@ router.get('/', getAllExpos);
 // @desc Get attended history
 // @access Private
 router.get('/me/attended-history', protect, getAttendedHistory);
+
+// @route POST /api/expos/booth-applications/:applicationId/pay
+// @desc Pay for a booth application (simulation)
+// @access Private (exhibitor)
+router.post('/booth-applications/:applicationId/pay', protect, authorize('exhibitor'), payForApplication);
 
 // @route GET /api/expos/:id
 // @desc Get expo by ID

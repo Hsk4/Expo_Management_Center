@@ -7,6 +7,11 @@ const BackgroundScene = () => {
     useEffect(() => {
         if (!mountRef.current) return
 
+        const PARTICLE_COUNT = 900
+        const TARGET_FPS = 30
+        const FRAME_MS = 1000 / TARGET_FPS
+        const PIXEL_RATIO_CAP = 1.5
+
         const scene = new THREE.Scene()
         const camera = new THREE.PerspectiveCamera(
             75,
@@ -17,10 +22,11 @@ const BackgroundScene = () => {
 
         const renderer = new THREE.WebGLRenderer({
             alpha: true,
-            antialias: true
+            antialias: false,
+            powerPreference: "high-performance"
         })
         renderer.setSize(window.innerWidth, window.innerHeight)
-        renderer.setPixelRatio(window.devicePixelRatio)
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, PIXEL_RATIO_CAP))
 
         // Ensure canvas has proper styling
         const canvas = renderer.domElement
@@ -36,7 +42,7 @@ const BackgroundScene = () => {
         const geometry = new THREE.BufferGeometry()
         const vertices = []
 
-        for (let i = 0; i < 1500; i++) {
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
             vertices.push(
                 (Math.random() - 0.5) * 20,
                 (Math.random() - 0.5) * 20,
@@ -66,7 +72,8 @@ const BackgroundScene = () => {
             size: 0.1,
             sizeAttenuation: true,
             map: texture,
-            transparent: true
+            transparent: true,
+            depthWrite: false
         })
 
         const particles = new THREE.Points(geometry, material)
@@ -75,19 +82,25 @@ const BackgroundScene = () => {
         camera.position.z = 5
 
         let animationId: number
+        let lastFrameTime = 0
 
-        const animate = () => {
+        const animate = (now: number) => {
             animationId = requestAnimationFrame(animate)
+
+            if (document.hidden || now - lastFrameTime < FRAME_MS) return
+            lastFrameTime = now
+
             particles.rotation.y += 0.0005
             renderer.render(scene, camera)
         }
 
-        animate()
+        animate(0)
 
         const handleResize = () => {
             camera.aspect = window.innerWidth / window.innerHeight
             camera.updateProjectionMatrix()
             renderer.setSize(window.innerWidth, window.innerHeight)
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, PIXEL_RATIO_CAP))
         }
 
         window.addEventListener('resize', handleResize)
@@ -97,6 +110,7 @@ const BackgroundScene = () => {
             cancelAnimationFrame(animationId)
             geometry.dispose()
             material.dispose()
+            texture.dispose()
             renderer.dispose()
             if (mountRef.current && renderer.domElement) {
                 mountRef.current.removeChild(renderer.domElement)

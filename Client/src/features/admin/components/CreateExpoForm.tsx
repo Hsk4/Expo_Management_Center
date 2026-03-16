@@ -154,6 +154,7 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
           maxAttendees: 0,
           gridRows: 10,
           gridCols: 10,
+          paymentAmount: 499,
         });
         setLayoutConfig(null);
         setSessions([]);

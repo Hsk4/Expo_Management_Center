@@ -3,6 +3,8 @@ const Booth = require('../models/booth.model');
 const User = require('../models/user.model');
 const { generateBoothGrid } = require('../modules/booths/booth.service');
 
+const createPaymentReference = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+
 // CREATES EXPO //
 
 exports.createExpo = async (req, res) => {
@@ -195,6 +197,11 @@ exports.publishExpo = async (req, res) => {
 
 exports.attendExpo = async (req, res) => {
     try {
+        const seatsRequested = Number(req.body?.seatsBooked || 1);
+        if (!Number.isInteger(seatsRequested) || seatsRequested < 1) {
+            return res.status(400).json({ success: false, message: 'seatsBooked must be a positive integer' });
+        }
+
         const expo = await Expo.findById(req.params.id);
         if (!expo) {
             return res.status(404).json({ success: false, message: 'Expo not found' });
@@ -208,20 +215,34 @@ exports.attendExpo = async (req, res) => {
         const alreadyAttending = user.attendedExpos.some((entry) => entry.expoId.toString() === expo._id.toString());
 
         if (alreadyAttending) {
-            return res.status(200).json({ success: true, message: 'You already marked attendance for this expo' });
+            return res.status(400).json({ success: false, message: 'You have already registered for this expo' });
         }
 
-        if (expo.attendeesRegisteredCount >= expo.maxAttendees) {
+        if (expo.attendeesRegisteredCount + seatsRequested > expo.maxAttendees) {
             return res.status(400).json({ success: false, message: 'Expo attendee capacity is full' });
         }
 
-        user.attendedExpos.push({ expoId: expo._id });
-        expo.attendeesRegisteredCount += 1;
+        user.attendedExpos.push({
+            expoId: expo._id,
+            seatsBooked: seatsRequested,
+            paymentStatus: 'paid',
+            paymentReference: createPaymentReference('ATTPAY'),
+            paymentAmount: expo.paymentAmount || 499,
+            paidAt: new Date(),
+        });
+        expo.attendeesRegisteredCount += seatsRequested;
 
         await user.save();
         await expo.save();
 
-        res.status(200).json({ success: true, message: 'Attendance confirmed successfully' });
+        res.status(200).json({
+            success: true,
+            message: `Payment successful. ${seatsRequested} seat(s) booked for this expo.`,
+            data: {
+                seatsBooked: seatsRequested,
+                remainingSeats: Math.max(expo.maxAttendees - expo.attendeesRegisteredCount, 0),
+            },
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

@@ -13,7 +13,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./dashboard.css";
-import { getAllExpos, getBoothApplications, type ExpoData } from "../../../services/expo.service";
+import {
+  getAllExpos,
+  getBoothApplications,
+  approveBoothApplication,
+  rejectBoothApplication,
+  type BoothApplicationData,
+  type ExpoData,
+} from "../../../services/expo.service";
 import { useAuth } from "../../../contexts/Auth.context";
 import { Icon } from "../components/Icons";
 import { DashboardOverview } from "../components/DashboardOverview";
@@ -40,36 +47,94 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [pendingCount, setPendingCount] = useState(0);
+  const [applications, setApplications] = useState<BoothApplicationData[]>([]);
+  const [busyOverviewActionId, setBusyOverviewActionId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchExpos();
-    fetchPendingApplicationsCount();
-  }, []);
+  const loadDashboardData = async () => {
+    const [exposResponse, applicationsResponse] = await Promise.all([
+      getAllExpos(),
+      getBoothApplications(),
+    ]);
 
-  const fetchPendingApplicationsCount = async () => {
-    try {
-      const response = await getBoothApplications();
-      if (response?.success) {
-        const pending = (response.data || []).filter((a: { status: string }) => a.status === "pending").length;
-        setPendingCount(pending);
-      }
-    } catch {
+    if (exposResponse.success) {
+      setExpos(exposResponse.data);
+    }
+
+    if (applicationsResponse?.success) {
+      const nextApplications = applicationsResponse.data || [];
+      setApplications(nextApplications);
+      const pending = nextApplications.filter((a) => a.status === "pending").length;
+      setPendingCount(pending);
+    } else {
+      setApplications([]);
       setPendingCount(0);
     }
   };
 
+  useEffect(() => {
+    let isActive = true;
+
+    const runLoad = async () => {
+      try {
+        setLoading(true);
+        await loadDashboardData();
+
+        if (!isActive) return;
+        setError("");
+      } catch (err: any) {
+        if (!isActive) return;
+        setError(err?.response?.data?.message || "Failed to fetch dashboard data");
+      } finally {
+        if (isActive) setLoading(false);
+      }
+    };
+
+    runLoad();
+    const intervalId = window.setInterval(runLoad, 15000);
+
+    return () => {
+      isActive = false;
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   const fetchExpos = async () => {
     try {
       setLoading(true);
-      const response = await getAllExpos();
-      if (response.success) {
-        setExpos(response.data);
-      }
+      await loadDashboardData();
+      setError("");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch expos");
+      setError(err.response?.data?.message || "Failed to fetch dashboard data");
       console.error("Error fetching expos:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApproveFromOverview = async (applicationId: string) => {
+    try {
+      setBusyOverviewActionId(applicationId);
+      await approveBoothApplication(applicationId);
+      await loadDashboardData();
+      setError("");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to approve application");
+    } finally {
+      setBusyOverviewActionId(null);
+    }
+  };
+
+  const handleRejectFromOverview = async (applicationId: string) => {
+    const reason = window.prompt("Optional rejection reason:") || "Application rejected by admin";
+    try {
+      setBusyOverviewActionId(applicationId);
+      await rejectBoothApplication(applicationId, reason);
+      await loadDashboardData();
+      setError("");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to reject application");
+    } finally {
+      setBusyOverviewActionId(null);
     }
   };
 
@@ -223,7 +288,15 @@ export default function AdminDashboardPage() {
             </div>
           ) : (
             <>
-              {activePage === "dashboard"    && <DashboardOverview expos={expos} />}
+              {activePage === "dashboard"    && (
+                <DashboardOverview
+                  expos={expos}
+                  applications={applications}
+                  onApproveApplication={handleApproveFromOverview}
+                  onRejectApplication={handleRejectFromOverview}
+                  busyApplicationId={busyOverviewActionId}
+                />
+              )}
               {activePage === "expos"        && <ExposView expos={expos} />}
               {activePage === "drafted-expos" && <DraftedExposView expos={expos} onExpoUpdated={fetchExpos} />}
               {activePage === "create-expo"  && <CreateExpoForm onExpoCreated={fetchExpos} />}

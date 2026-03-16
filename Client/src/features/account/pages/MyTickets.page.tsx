@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMyRegistrations, type BoothApplicationRegistration, type RegistrationSummary } from '../../../services/user.service';
 import { useAuth } from '../../../contexts/Auth.context';
+import { payBoothApplication, type PaymentSimulationPayload } from '../../../services/expo.service';
+import PaymentSimulationModal from '../../../components/common/PaymentSimulationModal';
 
 const emptySummary: RegistrationSummary = {
     attendedExpos: [],
@@ -24,7 +26,13 @@ const getStatusClasses = (status: string) => {
     return 'bg-white/5 border-white/10 text-[#d4d4d8]';
 };
 
-const ApplicationCard = ({ application }: { application: BoothApplicationRegistration }) => (
+const ApplicationCard = ({
+    application,
+    onPay,
+}: {
+    application: BoothApplicationRegistration;
+    onPay: (applicationId: string) => void;
+}) => (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3">
         <div className="flex items-start justify-between gap-4">
             <div>
@@ -41,6 +49,18 @@ const ApplicationCard = ({ application }: { application: BoothApplicationRegistr
             <p>Submitted: {formatDate(application.submittedAt)}</p>
             {application.reviewedAt ? <p>Reviewed: {formatDate(application.reviewedAt)}</p> : <p>Awaiting review</p>}
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-[#a0a0b0]">
+            <p>Payment: {application.paymentStatus || 'unpaid'}</p>
+            {application.paidAt ? <p>Paid on: {formatDate(application.paidAt)}</p> : <p>Payment pending</p>}
+        </div>
+        {application.status === 'pending' && application.paymentStatus !== 'paid' && (
+            <button
+                onClick={() => onPay(application._id)}
+                className="px-4 py-2 rounded-xl bg-[#4c9aff]/15 border border-[#4c9aff]/30 text-[#93c5fd] hover:bg-[#4c9aff]/25 transition"
+            >
+                Complete payment
+            </button>
+        )}
         {application.rejectionReason && (
             <div className="rounded-xl border border-[#f87171]/20 bg-[#f87171]/10 p-3 text-sm text-[#fda4af]">
                 Reason: {application.rejectionReason}
@@ -55,25 +75,33 @@ const MyTicketsPage = () => {
     const [summary, setSummary] = useState<RegistrationSummary>(emptySummary);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [paymentApplicationId, setPaymentApplicationId] = useState<string | null>(null);
+
+    const loadRegistrations = async () => {
+        try {
+            setLoading(true);
+            setError('');
+            const response = await getMyRegistrations();
+            if (response.success) {
+                setSummary(response.data);
+            }
+        } catch (err: unknown) {
+            setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load your registrations');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const load = async () => {
-            try {
-                setLoading(true);
-                setError('');
-                const response = await getMyRegistrations();
-                if (response.success) {
-                    setSummary(response.data);
-                }
-            } catch (err: unknown) {
-                setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load your registrations');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        load();
+        loadRegistrations();
     }, []);
+
+    const handleApplicationPayment = async (payment: PaymentSimulationPayload) => {
+        if (!paymentApplicationId) return;
+        await payBoothApplication(paymentApplicationId, payment);
+        setPaymentApplicationId(null);
+        await loadRegistrations();
+    };
 
     const stats = useMemo(() => ({
         attended: summary.attendedExpos.length,
@@ -280,7 +308,7 @@ const MyTicketsPage = () => {
                                     ) : (
                                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                             {summary.boothApplications.map((application) => (
-                                                <ApplicationCard key={application._id} application={application} />
+                                                <ApplicationCard key={application._id} application={application} onPay={setPaymentApplicationId} />
                                             ))}
                                         </div>
                                     )}
@@ -290,6 +318,15 @@ const MyTicketsPage = () => {
                     </div>
                 )}
             </div>
+            {paymentApplicationId && (
+                <PaymentSimulationModal
+                    title="Complete booth payment"
+                    subtitle={`Fee: $${summary.boothApplications.find(a => a._id === paymentApplicationId)?.paymentAmount ? (summary.boothApplications.find(a => a._id === paymentApplicationId)!.paymentAmount! / 100).toFixed(2) : '4.99'}`}
+                    ctaLabel="Pay and allot booth"
+                    onClose={() => setPaymentApplicationId(null)}
+                    onConfirm={handleApplicationPayment}
+                />
+            )}
         </div>
     );
 };

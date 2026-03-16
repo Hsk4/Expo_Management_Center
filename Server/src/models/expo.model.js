@@ -148,6 +148,11 @@ const expoSchema = new mongoose.Schema({
         type: [sessionSchema],
         default: [],
     },
+    paymentAmount: {
+        type: Number,
+        min: [0, "Payment amount cannot be negative"],
+        default: 499,
+    },
     createdBy : {
         type : mongoose.Schema.Types.ObjectId,
         ref : "User",

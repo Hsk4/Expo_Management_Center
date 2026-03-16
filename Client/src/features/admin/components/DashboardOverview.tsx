@@ -3,15 +3,24 @@
 // ─────────────────────────────────────────────
 
 import { Icon } from "./Icons";
-import { type ExpoData } from "../../../services/expo.service";
+import { type BoothApplicationData, type ExpoData } from "../../../services/expo.service";
 import { getExpoStatus } from "../utils/expoHelpers";
-import { applications } from "../data/mockApplications";
 
 interface DashboardOverviewProps {
   expos: ExpoData[];
+  applications: BoothApplicationData[];
+  onApproveApplication?: (applicationId: string) => Promise<void>;
+  onRejectApplication?: (applicationId: string) => Promise<void>;
+  busyApplicationId?: string | null;
 }
 
-export function DashboardOverview({ expos }: DashboardOverviewProps) {
+export function DashboardOverview({
+  expos,
+  applications,
+  onApproveApplication,
+  onRejectApplication,
+  busyApplicationId = null,
+}: DashboardOverviewProps) {
   // Calculate statistics
   const exposWithStatus = expos.map(expo => ({
     ...expo,
@@ -22,7 +31,7 @@ export function DashboardOverview({ expos }: DashboardOverviewProps) {
   const completedCount = exposWithStatus.filter(e => e.displayStatus === "completed").length;
   const totalAttendees = expos.reduce((total, e) => total + e.attendeesRegisteredCount, 0);
   const totalExhibitors = expos.reduce((total, e) => total + e.boothsBookedCount, 0);
-  const pendingApplications = applications.filter(a => a.status === "pending");
+  const pendingApplications = applications.filter((a) => a.status === "pending");
 
   // Calculate max values for chart scaling
   const exposWithData = expos.filter(e => e.attendeesRegisteredCount > 0 || e.boothsBookedCount > 0);
@@ -133,19 +142,31 @@ export function DashboardOverview({ expos }: DashboardOverviewProps) {
               </tr>
             </thead>
             <tbody>
-              {pendingApplications.map(app => (
-                <tr key={app.id}>
+              {pendingApplications.map((app) => (
+                <tr key={app._id}>
                   <td>
-                    <div className="cell-name">{app.name}</div>
-                    <div className="cell-email">{app.email}</div>
+                    <div className="cell-name">{app.exhibitorId?.name || "Unknown"}</div>
+                    <div className="cell-email">{app.exhibitorId?.email || "No email"}</div>
                   </td>
-                  <td><span className={`badge badge-${app.role}`}>{app.role}</span></td>
-                  <td><span className="cell-soft">{app.expo}</span></td>
-                  <td><span className="cell-date"><Icon.Calendar /> {app.appliedOn}</span></td>
+                  <td><span className={`badge badge-${app.exhibitorId?.role || "exhibitor"}`}>{app.exhibitorId?.role || "exhibitor"}</span></td>
+                  <td><span className="cell-soft">{app.expoId?.title || "Unknown Expo"}</span></td>
+                  <td><span className="cell-date"><Icon.Calendar /> {new Date(app.submittedAt).toLocaleDateString()}</span></td>
                   <td>
                     <div style={{ display: "flex", gap: "6px" }}>
-                      <button className="btn-approve"><Icon.Check /> Approve</button>
-                      <button className="btn-reject"><Icon.X /> Reject</button>
+                      <button
+                        className="btn-approve"
+                        disabled={busyApplicationId === app._id}
+                        onClick={() => onApproveApplication?.(app._id)}
+                      >
+                        <Icon.Check /> {busyApplicationId === app._id ? "..." : "Approve"}
+                      </button>
+                      <button
+                        className="btn-reject"
+                        disabled={busyApplicationId === app._id}
+                        onClick={() => onRejectApplication?.(app._id)}
+                      >
+                        <Icon.X /> {busyApplicationId === app._id ? "..." : "Reject"}
+                      </button>
                     </div>
                   </td>
                 </tr>

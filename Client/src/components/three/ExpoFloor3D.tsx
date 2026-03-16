@@ -32,6 +32,12 @@ const ExpoFloor3D = ({
     const boothMeshesRef = useRef<Map<string, THREE.Mesh>>(new Map())
     const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster())
     const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2())
+    const moveDirectionRef = useRef<THREE.Vector3>(new THREE.Vector3())
+    const strafeDirectionRef = useRef<THREE.Vector3>(new THREE.Vector3())
+    const hoveredBoothRef = useRef<string | null>(null)
+    const isPointerInCanvasRef = useRef(false)
+    const pointerDirtyRef = useRef(false)
+    const lastRaycastAtRef = useRef(0)
     const [hoveredBoothId, setHoveredBoothId] = useState<string | null>(null)
     const [previewBooth, setPreviewBooth] = useState<BoothData | null>(null)
     const [walkthroughMode, setWalkthroughMode] = useState(false)
@@ -43,11 +49,8 @@ const ExpoFloor3D = ({
 
         // Wait for container to have dimensions
         if (containerRef.current.clientWidth === 0 || containerRef.current.clientHeight === 0) {
-            console.warn('3D container has no dimensions yet')
             return
         }
-
-        console.log('Initializing 3D scene with dimensions:', containerRef.current.clientWidth, 'x', containerRef.current.clientHeight)
 
         // Scene setup with admin dashboard colors
         const scene = new THREE.Scene()
@@ -68,16 +71,16 @@ const ExpoFloor3D = ({
 
         // Renderer with enhanced quality
         const renderer = new THREE.WebGLRenderer({
-            antialias: true,
+            antialias: window.devicePixelRatio <= 1.5,
             alpha: true,
             powerPreference: "high-performance"
         })
         renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight)
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)) // Optimize for performance
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
         renderer.shadowMap.enabled = true
         renderer.shadowMap.type = THREE.PCFSoftShadowMap
         renderer.toneMapping = THREE.ACESFilmicToneMapping
-        renderer.toneMappingExposure = 1.2
+        renderer.toneMappingExposure = 1.1
 
         // Ensure canvas fills container
         renderer.domElement.style.width = '100%'
@@ -88,8 +91,6 @@ const ExpoFloor3D = ({
 
         containerRef.current.appendChild(renderer.domElement)
         rendererRef.current = renderer
-
-        console.log('Renderer initialized successfully')
 
         // Enhanced Controls for smoother experience
         const controls = new OrbitControls(camera, renderer.domElement)
@@ -109,21 +110,6 @@ const ExpoFloor3D = ({
         controls.autoRotateSpeed = 0.5
         controlsRef.current = controls
 
-        console.log('OrbitControls initialized:', {
-            enabled: controls.enabled,
-            enableDamping: controls.enableDamping,
-            enablePan: controls.enablePan,
-            domElement: !!renderer.domElement
-        })
-
-        // Test controls after a brief delay
-        setTimeout(() => {
-            console.log('Controls after 100ms:', {
-                enabled: controls.enabled,
-                target: controls.target
-            })
-        }, 100)
-
         // Pointer Lock Controls for first-person walkthrough
         const pointerLockControls = new PointerLockControls(camera, renderer.domElement)
         pointerLockControlsRef.current = pointerLockControls
@@ -136,8 +122,8 @@ const ExpoFloor3D = ({
         const mainLight = new THREE.DirectionalLight(0xffffff, 0.9)
         mainLight.position.set(20, 35, 20)
         mainLight.castShadow = true
-        mainLight.shadow.mapSize.width = 2048
-        mainLight.shadow.mapSize.height = 2048
+        mainLight.shadow.mapSize.width = 1024
+        mainLight.shadow.mapSize.height = 1024
         mainLight.shadow.camera.far = 120
         mainLight.shadow.bias = -0.0001
         scene.add(mainLight)
@@ -231,8 +217,18 @@ const ExpoFloor3D = ({
 
         // Cleanup
         return () => {
+            controls.dispose()
+            pointerLockControls.unlock()
+            pointerLockControls.disconnect()
+
+            scene.traverse((obj) => {
+                disposeObject3D(obj)
+            })
+
             renderer.dispose()
-            containerRef.current?.removeChild(renderer.domElement)
+            if (containerRef.current?.contains(renderer.domElement)) {
+                containerRef.current.removeChild(renderer.domElement)
+            }
         }
     }, [gridRows, gridCols])
 
@@ -243,6 +239,7 @@ const ExpoFloor3D = ({
         // Clear existing booth meshes
         boothMeshesRef.current.forEach((mesh) => {
             sceneRef.current?.remove(mesh)
+            disposeObject3D(mesh)
         })
         boothMeshesRef.current.clear()
 
@@ -298,6 +295,20 @@ const ExpoFloor3D = ({
             const rect = containerRef.current!.getBoundingClientRect()
             mouseRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
             mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+            pointerDirtyRef.current = true
+        }
+
+        const handleMouseEnter = () => {
+            isPointerInCanvasRef.current = true
+            pointerDirtyRef.current = true
+        }
+
+        const handleMouseLeave = () => {
+            isPointerInCanvasRef.current = false
+            pointerDirtyRef.current = false
+            hoveredBoothRef.current = null
+            setHoveredBoothId(null)
+            document.body.style.cursor = "default"
         }
 
         const handleClick = () => {
@@ -335,11 +346,15 @@ const ExpoFloor3D = ({
         }
 
         containerRef.current.addEventListener("mousemove", handleMouseMove)
+        containerRef.current.addEventListener("mouseenter", handleMouseEnter)
+        containerRef.current.addEventListener("mouseleave", handleMouseLeave)
         containerRef.current.addEventListener("click", handleClick)
         containerRef.current.addEventListener("contextmenu", handleRightClick)
 
         return () => {
             containerRef.current?.removeEventListener("mousemove", handleMouseMove)
+            containerRef.current?.removeEventListener("mouseenter", handleMouseEnter)
+            containerRef.current?.removeEventListener("mouseleave", handleMouseLeave)
             containerRef.current?.removeEventListener("click", handleClick)
             containerRef.current?.removeEventListener("contextmenu", handleRightClick)
         }
@@ -406,16 +421,23 @@ const ExpoFloor3D = ({
         if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return
 
         let animationId: number
+        const TARGET_FRAME_MS = 1000 / 60
+        const RAYCAST_INTERVAL_MS = 48
+        let lastFrameAt = 0
 
-        const animate = () => {
+        const animate = (time: number) => {
             animationId = requestAnimationFrame(animate)
+
+            if (document.hidden || time - lastFrameAt < TARGET_FRAME_MS) return
+            lastFrameAt = time
 
             // Walkthrough movement with sprint support
             if (walkthroughMode && pointerLockControlsRef.current?.isLocked && cameraRef.current) {
                 const baseSpeed = 0.15
                 const sprintMultiplier = keysPressed.current.has("shift") ? 2 : 1
                 const speed = baseSpeed * sprintMultiplier
-                const direction = new THREE.Vector3()
+                const direction = moveDirectionRef.current
+                const lateral = strafeDirectionRef.current
 
                 if (keysPressed.current.has("w")) {
                     cameraRef.current.getWorldDirection(direction)
@@ -433,15 +455,15 @@ const ExpoFloor3D = ({
                     cameraRef.current.getWorldDirection(direction)
                     direction.y = 0
                     direction.normalize()
-                    const left = new THREE.Vector3(-direction.z, 0, direction.x)
-                    cameraRef.current.position.addScaledVector(left, speed)
+                    lateral.set(-direction.z, 0, direction.x)
+                    cameraRef.current.position.addScaledVector(lateral, speed)
                 }
                 if (keysPressed.current.has("d")) {
                     cameraRef.current.getWorldDirection(direction)
                     direction.y = 0
                     direction.normalize()
-                    const right = new THREE.Vector3(direction.z, 0, -direction.x)
-                    cameraRef.current.position.addScaledVector(right, speed)
+                    lateral.set(direction.z, 0, -direction.x)
+                    cameraRef.current.position.addScaledVector(lateral, speed)
                 }
 
                 // Boundary checking - keep within expo floor
@@ -465,19 +487,30 @@ const ExpoFloor3D = ({
 
             // Raycasting for hover effect
             if (sceneRef.current && cameraRef.current && canInteract && !walkthroughMode) {
-                raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current)
-                const intersects = raycasterRef.current.intersectObjects(
-                    Array.from(boothMeshesRef.current.values())
-                )
+                const now = performance.now()
+                if (isPointerInCanvasRef.current && (pointerDirtyRef.current || now - lastRaycastAtRef.current >= RAYCAST_INTERVAL_MS)) {
+                    pointerDirtyRef.current = false
+                    lastRaycastAtRef.current = now
 
-                if (intersects.length > 0) {
-                    const hoveredMesh = intersects[0].object as THREE.Mesh
-                    const booth = hoveredMesh.userData.booth as BoothData
-                    setHoveredBoothId(booth.status === "available" ? booth._id : null)
-                    document.body.style.cursor = booth.status === "available" ? "pointer" : "default"
-                } else {
-                    setHoveredBoothId(null)
-                    document.body.style.cursor = "default"
+                    raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current)
+                    const intersects = raycasterRef.current.intersectObjects(
+                        Array.from(boothMeshesRef.current.values()),
+                        false
+                    )
+
+                    const nextHoveredId = intersects.length > 0
+                        ? (() => {
+                            const hoveredMesh = intersects[0].object as THREE.Mesh
+                            const booth = hoveredMesh.userData.booth as BoothData
+                            return booth.status === "available" ? booth._id : null
+                        })()
+                        : null
+
+                    if (nextHoveredId !== hoveredBoothRef.current) {
+                        hoveredBoothRef.current = nextHoveredId
+                        setHoveredBoothId(nextHoveredId)
+                    }
+                    document.body.style.cursor = nextHoveredId ? "pointer" : "default"
                 }
             }
 
@@ -486,7 +519,7 @@ const ExpoFloor3D = ({
             }
         }
 
-        animate()
+        animate(0)
 
         return () => {
             cancelAnimationFrame(animationId)
@@ -505,6 +538,7 @@ const ExpoFloor3D = ({
             cameraRef.current.aspect = width / height
             cameraRef.current.updateProjectionMatrix()
             rendererRef.current.setSize(width, height)
+            rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
         }
 
         window.addEventListener("resize", handleResize)
@@ -873,6 +907,21 @@ function createTextLabel(text: string, x: number, y: number, z: number, scene: T
     sprite.position.set(x, y, z)
     sprite.scale.set(4, 1, 1)
     scene.add(sprite)
+}
+
+function disposeObject3D(object: THREE.Object3D) {
+    const mesh = object as THREE.Mesh
+    if (mesh.geometry) {
+        mesh.geometry.dispose()
+    }
+
+    const maybeMaterial = (mesh as THREE.Mesh).material
+    const materials = Array.isArray(maybeMaterial) ? maybeMaterial : maybeMaterial ? [maybeMaterial] : []
+    materials.forEach((material) => {
+        const materialWithMap = material as THREE.Material & { map?: THREE.Texture }
+        materialWithMap.map?.dispose()
+        material.dispose()
+    })
 }
 
 export default ExpoFloor3D

@@ -63,3 +63,64 @@ exports.getMySupportRequests = async (req, res) => {
     }
 };
 
+// @desc    Get all support requests (admin only)
+// @route   GET /api/admin/support-requests
+// @access  Private (admin)
+exports.getAllSupportRequests = async (req, res) => {
+    try {
+        const { status, type, page = 1, limit = 50 } = req.query;
+        const filter = {};
+        if (status && ['open', 'in-review', 'resolved'].includes(status)) filter.status = status;
+        if (type && ['support', 'feedback'].includes(type)) filter.type = type;
+
+        const requests = await SupportRequest.find(filter)
+            .populate('userId', 'name email role')
+            .populate('expoId', 'title location startDate endDate status')
+            .sort({ createdAt: -1 })
+            .skip((Number(page) - 1) * Number(limit))
+            .limit(Number(limit));
+
+        const total = await SupportRequest.countDocuments(filter);
+
+        res.status(200).json({
+            success: true,
+            total,
+            data: requests,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Update support request status (admin only)
+// @route   PATCH /api/admin/support-requests/:id/status
+// @access  Private (admin)
+exports.updateSupportRequestStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        if (!status || !['open', 'in-review', 'resolved'].includes(status)) {
+            return res.status(400).json({ success: false, message: 'Valid status is required: open, in-review, or resolved' });
+        }
+
+        const request = await SupportRequest.findByIdAndUpdate(
+            req.params.id,
+            { status },
+            { new: true, runValidators: true }
+        )
+            .populate('userId', 'name email role')
+            .populate('expoId', 'title location startDate endDate status');
+
+        if (!request) {
+            return res.status(404).json({ success: false, message: 'Support request not found' });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: `Request marked as ${status}`,
+            data: request,
+        });
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+};
+

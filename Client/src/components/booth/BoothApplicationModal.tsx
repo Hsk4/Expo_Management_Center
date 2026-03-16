@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import type { BoothData, BoothCompanyProfileInput } from "../../services/expo.service"
-import { submitBoothApplication } from "../../services/expo.service"
+import { payBoothApplication, submitBoothApplication } from "../../services/expo.service"
+import PaymentSimulationModal from "../common/PaymentSimulationModal"
 
 interface BoothApplicationModalProps {
     booth: BoothData
@@ -62,6 +63,9 @@ const BoothApplicationModal = ({ booth, expoId, onClose, onSuccess }: BoothAppli
     })
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState("")
+    const [paymentOpen, setPaymentOpen] = useState(false)
+    const [applicationId, setApplicationId] = useState("")
+    const [paymentAmount, setPaymentAmount] = useState(499)
 
     const handleAnswerChange = (questionId: string, answer: string) => {
         setAnswers(prev => ({ ...prev, [questionId]: answer }))
@@ -99,13 +103,29 @@ const BoothApplicationModal = ({ booth, expoId, onClose, onSuccess }: BoothAppli
             const response = await submitBoothApplication(expoId, booth._id, answers, companyProfile)
 
             if (response.success) {
-                onSuccess()
+                const createdId = response?.data?._id
+                const amount = response?.data?.paymentAmount || 499
+                if (!createdId) {
+                    setError("Application was created but payment session could not start")
+                    return
+                }
+                setApplicationId(createdId)
+                setPaymentAmount(amount)
+                setPaymentOpen(true)
             }
         } catch (err: unknown) {
             const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to submit application"
             setError(message)
         } finally {
             setSubmitting(false)
+        }
+    }
+
+    const handlePayment = async (payment: { paymentMethod?: string; cardNumber: string; cardName: string; expiry: string; cvv: string }) => {
+        const response = await payBoothApplication(applicationId, payment)
+        if (response.success) {
+            setPaymentOpen(false)
+            onSuccess()
         }
     }
 
@@ -269,7 +289,7 @@ const BoothApplicationModal = ({ booth, expoId, onClose, onSuccess }: BoothAppli
                         disabled={submitting}
                         className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-[#4c9aff] to-[#a78bfa] hover:from-[#3b82f6] hover:to-[#9333ea] disabled:from-[#4c9aff]/60 disabled:to-[#a78bfa]/60 text-white font-semibold transition shadow-lg"
                     >
-                        {submitting ? "Submitting..." : "Submit Application"}
+                        {submitting ? "Submitting..." : "Submit & continue to payment"}
                     </button>
                 </div>
 
@@ -277,6 +297,15 @@ const BoothApplicationModal = ({ booth, expoId, onClose, onSuccess }: BoothAppli
                     * Required fields
                 </p>
             </motion.div>
+            {paymentOpen && applicationId && (
+                <PaymentSimulationModal
+                    title="Complete booth payment"
+                    subtitle={`Booth application fee: $${(paymentAmount / 100).toFixed(2)}`}
+                    ctaLabel="Pay and allot booth"
+                    onClose={() => setPaymentOpen(false)}
+                    onConfirm={handlePayment}
+                />
+            )}
         </motion.div>
     )
 }

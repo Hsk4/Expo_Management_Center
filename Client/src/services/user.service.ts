@@ -59,6 +59,10 @@ export interface BookedBoothRegistration {
 export interface BoothApplicationRegistration {
     _id: string;
     status: 'pending' | 'approved' | 'rejected';
+    paymentStatus?: 'unpaid' | 'paid';
+    paymentReference?: string;
+    paidAt?: string;
+    paymentAmount?: number;
     submittedAt: string;
     reviewedAt?: string;
     rejectionReason?: string;
@@ -191,6 +195,41 @@ export const submitSupportRequest = async (payload: {
         success: boolean;
         message: string;
         data: SupportRequestItem;
+    };
+};
+
+// ── Admin: support requests ──────────────────────────────
+
+export interface AdminSupportRequestItem extends SupportRequestItem {
+    userId: {
+        _id: string;
+        name: string;
+        email: string;
+        role: 'attendee' | 'exhibitor' | 'admin';
+    };
+}
+
+export const adminGetAllSupportRequests = async (filters?: {
+    status?: 'open' | 'in-review' | 'resolved';
+    type?: 'support' | 'feedback';
+}) => {
+    const response = await api.get('/admin/support-requests', { params: filters });
+    return response.data as {
+        success: boolean;
+        total: number;
+        data: AdminSupportRequestItem[];
+    };
+};
+
+export const adminUpdateSupportRequestStatus = async (
+    id: string,
+    status: 'open' | 'in-review' | 'resolved'
+) => {
+    const response = await api.patch(`/admin/support-requests/${id}/status`, { status });
+    return response.data as {
+        success: boolean;
+        message: string;
+        data: AdminSupportRequestItem;
     };
 };
 

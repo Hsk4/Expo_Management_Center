@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
-import { attendExpo, getAllExpos, type ExpoData } from "../../../services/expo.service"
+import { attendExpoWithPayment, getAllExpos, type ExpoData, type PaymentSimulationPayload } from "../../../services/expo.service"
 import { useAuth } from "../../../contexts/Auth.context"
+import PaymentSimulationModal from "../../../components/common/PaymentSimulationModal"
 
 const ExposPage = () => {
     const navigate = useNavigate()
@@ -11,6 +12,9 @@ const ExposPage = () => {
     const [error, setError] = useState("")
     const [busyExpoId, setBusyExpoId] = useState<string | null>(null)
     const [message, setMessage] = useState("")
+    const [paymentExpoId, setPaymentExpoId] = useState<string | null>(null)
+    const [seatSelections, setSeatSelections] = useState<Record<string, number>>({})
+    const [selectedExpoForPayment, setSelectedExpoForPayment] = useState<ExpoData | null>(null)
 
     useEffect(() => {
         fetchExpos()
@@ -31,13 +35,15 @@ const ExposPage = () => {
         }
     }
 
-    const handleAttendExpo = async (expoId: string) => {
+    const handleAttendExpo = async (expoId: string, payment: PaymentSimulationPayload) => {
         try {
             setBusyExpoId(expoId)
             setMessage("")
-            const response = await attendExpo(expoId)
+            const seatsBooked = Math.max(1, Number(seatSelections[expoId] || 1))
+            const response = await attendExpoWithPayment(expoId, seatsBooked, payment)
             setMessage(response?.message || "Attendance confirmed")
             await fetchExpos()
+            setPaymentExpoId(null)
         } catch (err: unknown) {
             setMessage((err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to mark attendance")
         } finally {
@@ -62,6 +68,7 @@ const ExposPage = () => {
     const isExhibitor = user?.role === "exhibitor"
 
     return (
+        <>
         <div className="min-h-screen py-24 px-6">
             <div className="max-w-7xl mx-auto">
                 {/* Breadcrumb / Back Navigation */}
@@ -180,12 +187,21 @@ const ExposPage = () => {
                                                 🏢 View 3D Floor
                                             </button>
                                             <button
-                                                onClick={() => handleAttendExpo(expo._id)}
+                                                onClick={() => setPaymentExpoId(expo._id)}
                                                 disabled={busyExpoId === expo._id}
                                                 className="w-full text-sm px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/60 transition"
                                             >
-                                                {busyExpoId === expo._id ? "Processing..." : "Attend expo"}
+                                                {busyExpoId === expo._id ? "Processing..." : "Pay and attend expo"}
                                             </button>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                max={Math.max(expo.maxAttendees - expo.attendeesRegisteredCount, 1)}
+                                                value={seatSelections[expo._id] || 1}
+                                                onChange={(e) => setSeatSelections((prev) => ({ ...prev, [expo._id]: Math.max(1, Number(e.target.value || 1)) }))}
+                                                className="w-full text-sm px-3 py-2 rounded-lg bg-black/20 border border-white/10 text-white"
+                                                aria-label="Seats to book"
+                                            />
                                             {isExhibitor && (
                                                 <button
                                                     onClick={() => navigate(`/exhibitor/book-booth/${expo._id}`)}
@@ -203,6 +219,19 @@ const ExposPage = () => {
                 )}
             </div>
         </div>
+        {paymentExpoId && selectedExpoForPayment && (
+            <PaymentSimulationModal
+                title="Complete attendee payment"
+                subtitle={`Seats: ${seatSelections[paymentExpoId] || 1} × $${((selectedExpoForPayment.paymentAmount || 499) / 100).toFixed(2)} = $${(((seatSelections[paymentExpoId] || 1) * (selectedExpoForPayment.paymentAmount || 499)) / 100).toFixed(2)}`}
+                ctaLabel="Pay and confirm"
+                onClose={() => {
+                    setPaymentExpoId(null)
+                    setSelectedExpoForPayment(null)
+                }}
+                onConfirm={(payment) => handleAttendExpo(paymentExpoId, payment)}
+            />
+        )}
+        </>
     )
 }
 

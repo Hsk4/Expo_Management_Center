@@ -11,6 +11,29 @@ const attendeeSchema = new mongoose.Schema({
         type : Date,
         default : Date.now
     },
+    seatsBooked: {
+        type: Number,
+        min: 1,
+        default: 1,
+    },
+    paymentStatus: {
+        type: String,
+        enum: ['paid'],
+        default: 'paid',
+    },
+    paymentReference: {
+        type: String,
+        default: '',
+    },
+    paidAt: {
+        type: Date,
+        default: Date.now,
+    },
+    paymentAmount: {
+        type: Number,
+        min: 0,
+        default: 0,
+    },
 },
     {_id: false}
 )

@@ -51,6 +51,23 @@ const boothApplicationSchema = new mongoose.Schema({
         enum: ['pending', 'approved', 'rejected'],
         default: 'pending'
     },
+    paymentStatus: {
+        type: String,
+        enum: ['unpaid', 'paid'],
+        default: 'unpaid',
+    },
+    paymentReference: {
+        type: String,
+        default: '',
+    },
+    paidAt: {
+        type: Date,
+    },
+    paymentAmount: {
+        type: Number,
+        min: 0,
+        default: 0,
+    },
     rejectionReason: {
         type: String,
         required: false
