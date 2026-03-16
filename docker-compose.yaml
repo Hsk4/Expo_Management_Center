@@ -13,7 +13,6 @@ services:
 
 #BACKEND
   backend:
-    image: farhan249/expo-backend:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -28,7 +27,6 @@ services:
   
   #FRONTEND
   fronted:
-    image: farhan249/expo-frontend:latest
     build:
       context: ./Client
       dockerfile: Dockerfile
