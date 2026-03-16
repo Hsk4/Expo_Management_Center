@@ -2,7 +2,7 @@
 //  EXPOS VIEW PAGE
 // ─────────────────────────────────────────────
 
-import { Icon } from "./Icons";
+import { CalendarDays, MapPin, Ticket, Users, Store } from "lucide-react";
 import { type ExpoData } from "../../../services/expo.service";
 import { getExpoStatus, formatDate } from "../utils/expoHelpers";
 
@@ -55,11 +55,11 @@ export function ExposView({ expos }: ExposViewProps) {
                     <td><span className="cell-strong">{expo.title}</span></td>
                     <td><span className="cell-dim">{expo.theme || "—"}</span></td>
                     <td><span className={`badge badge-${expo.displayStatus}`}>{expo.displayStatus}</span></td>
-                    <td><span className="cell-dim">${((expo.paymentAmount ?? 499) / 100).toFixed(2)}</span></td>
-                    <td><span className="cell-date"><Icon.Calendar /> {formatDate(expo.startDate)}</span></td>
-                    <td><span className="cell-dim">{expo.location}</span></td>
-                    <td><span className="cell-number">{expo.attendeesRegisteredCount > 0 ? expo.attendeesRegisteredCount.toLocaleString() : "—"}</span></td>
-                    <td><span className="cell-number">{expo.boothsBookedCount > 0 ? expo.boothsBookedCount.toLocaleString() : "—"}</span></td>
+                    <td><span className="cell-dim inline-flex items-center gap-1"><Ticket className="h-3.5 w-3.5" />${((expo.paymentAmount ?? 499) / 100).toFixed(2)}</span></td>
+                    <td><span className="cell-date inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" /> {formatDate(expo.startDate)}</span></td>
+                    <td><span className="cell-dim inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{expo.location}</span></td>
+                    <td><span className="cell-number inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" />{expo.attendeesRegisteredCount > 0 ? expo.attendeesRegisteredCount.toLocaleString() : "—"}</span></td>
+                    <td><span className="cell-number inline-flex items-center gap-1"><Store className="h-3.5 w-3.5" />{expo.boothsBookedCount > 0 ? expo.boothsBookedCount.toLocaleString() : "—"}</span></td>
                   </tr>
                 ))
               ) : (

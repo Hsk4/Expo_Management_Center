@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
+import { ChevronDown, LogOut, Menu, Ticket, UserCog, X } from "lucide-react"
 import { useAuth } from "../../contexts/Auth.context"
 import { getAttendedExposHistory, type AttendedExpoHistoryItem } from "../../services/expo.service"
+import EventSphereLogo from "./EventSphereLogo"
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false)
@@ -81,12 +83,8 @@ const Navbar = () => {
         <header className="sticky top-0 z-50 backdrop-blur-md bg-white/5 border-b border-white/10">
             <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
                 {/* Logo */}
-                <div
-                    onClick={() => navigate("/")}
-                    className="cursor-pointer text-xl font-bold tracking-wide"
-                >
-                    <span className="text-white">Event</span>
-                    <span className="text-neutral-400">Sphere</span>
+                <div onClick={() => navigate("/")} className="cursor-pointer">
+                    <EventSphereLogo size="md" />
                 </div>
 
                 {/* Desktop Menu */}
@@ -126,14 +124,7 @@ const Navbar = () => {
                                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-sm font-semibold">
                                     {user?.email.charAt(0).toUpperCase()}
                                 </div>
-                                <svg
-                                    className={`w-4 h-4 transition-transform ${showProfileDropdown ? "rotate-180" : ""}`}
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
+                                <ChevronDown className={`w-4 h-4 transition-transform ${showProfileDropdown ? "rotate-180" : ""}`} />
                             </button>
 
                             {/* Dropdown Menu */}
@@ -154,7 +145,7 @@ const Navbar = () => {
                                                 }}
                                                 className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-white/10 transition"
                                             >
-                                                Attend expo as attendee
+                                                    <span className="inline-flex items-center gap-2"><Ticket className="h-4 w-4" />Attend expo as attendee</span>
                                             </button>
                                         )}
 
@@ -166,7 +157,7 @@ const Navbar = () => {
                                                 }}
                                                 className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-white/10 transition"
                                             >
-                                                Attend expo as exhibitor and book booth
+                                                    <span className="inline-flex items-center gap-2"><Ticket className="h-4 w-4" />Attend expo as exhibitor and book booth</span>
                                             </button>
                                         )}
 
@@ -177,7 +168,7 @@ const Navbar = () => {
                                             }}
                                             className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-white/10 transition"
                                         >
-                                            Profile settings
+                                            <span className="inline-flex items-center gap-2"><UserCog className="h-4 w-4" />Profile settings</span>
                                         </button>
 
                                         <button
@@ -221,7 +212,7 @@ const Navbar = () => {
                                             onClick={handleLogout}
                                             className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition"
                                         >
-                                            Logout
+                                            <span className="inline-flex items-center gap-2"><LogOut className="h-4 w-4" />Logout</span>
                                         </button>
                                     </div>
                                 </div>
@@ -251,7 +242,7 @@ const Navbar = () => {
                     className="md:hidden text-white"
                     onClick={() => setIsOpen(!isOpen)}
                 >
-                    ☰
+                    {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                 </button>
             </nav>
 
