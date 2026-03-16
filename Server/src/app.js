@@ -4,27 +4,39 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
+const ENV = require('./config/env');
 const authRoutes = require('./routes/auth.routes');
 const app = express();
 const adminRoutes = require('./routes/admin.routes');
 const expoRoutes = require('./routes/expo.routes');
 const userRoutes = require('./routes/user.routes');
+const notificationRoutes = require('./routes/notification.routes');
+app.disable('x-powered-by');
+
+if (ENV.isProduction) {
+    app.set('trust proxy', 1);
+}
+
 // security headers
 app.use(helmet());
 
 // rate limiter 
 
 const limiter = rateLimit({
-    windowMs : 15 * 60 * 1000, // 15 minutes
-    max : 200 // limit each IP to 100 requests per windowMs
+    windowMs : ENV.RATE_LIMIT_WINDOW_MS,
+    max : ENV.RATE_LIMIT_MAX,
+    standardHeaders: true,
+    legacyHeaders: false,
 });
 
 app.use(limiter);
 
-app.use(morgan('dev'));
+if (ENV.ENABLE_REQUEST_LOGS) {
+    app.use(morgan('dev'));
+}
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: ENV.CORS_ORIGINS,
     credentials: true
 }));
 
@@ -41,4 +53,5 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/expos', expoRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/notifications', notificationRoutes);
 module.exports = app;

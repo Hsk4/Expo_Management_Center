@@ -18,6 +18,7 @@ import ExpoFloorViewPage from "../features/attendee/pages/ExpoFloorView.page.tsx
 import ProfilePage from "../features/account/pages/Profile.page.tsx"
 import MyTicketsPage from "../features/account/pages/MyTickets.page.tsx"
 import SupportPage from "../features/account/pages/Support.page.tsx"
+import NotificationsPage from "../features/account/pages/Notifications.page.tsx"
 
 const AppRoutes = () => {
     return (
@@ -43,7 +44,15 @@ const AppRoutes = () => {
                 <Route
                     path="/profile"
                     element={
-                        <ProtectedRoute allowedRoles={["attendee", "exhibitor"]}>
+                        <ProtectedRoute allowedRoles={["attendee", "exhibitor", "admin"]}>
+                            <ProfilePage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/settings"
+                    element={
+                        <ProtectedRoute allowedRoles={["attendee", "exhibitor", "admin"]}>
                             <ProfilePage />
                         </ProtectedRoute>
                     }
@@ -59,8 +68,16 @@ const AppRoutes = () => {
                 <Route
                     path="/support"
                     element={
-                        <ProtectedRoute allowedRoles={["attendee", "exhibitor"]}>
+                        <ProtectedRoute allowedRoles={["attendee", "exhibitor", "admin"]}>
                             <SupportPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/notifications"
+                    element={
+                        <ProtectedRoute allowedRoles={["attendee", "exhibitor", "admin"]}>
+                            <NotificationsPage />
                         </ProtectedRoute>
                     }
                 />

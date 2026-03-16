@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Building2, Coffee, Lock, Mic, Pizza, Sandwich, Search, X } from "lucide-react"
 import type { BoothData } from "../../services/expo.service"
 import BoothDetailsModal from "./BoothDetailsModal"
 import BoothApplicationModal from "./BoothApplicationModal"
@@ -125,7 +126,7 @@ const ExpoFloor2D = ({
 
             {/* Main Stage */}
             <div className="mb-6 p-4 rounded-lg bg-gradient-to-r from-[#6366f1] to-[#a78bfa] border border-[#4c9aff]/30 text-center">
-                <h3 className="text-xl font-bold text-white">🎤 MAIN STAGE</h3>
+                <h3 className="text-xl font-bold text-white inline-flex items-center gap-2"><Mic className="h-5 w-5" />MAIN STAGE</h3>
             </div>
 
             {/* Grid */}
@@ -167,7 +168,7 @@ const ExpoFloor2D = ({
                                                 R{booth.row}C{booth.col}
                                             </span>
                                             {booth.status === "booked" && (
-                                                <span className="text-xs text-white mt-1">🔒</span>
+                                                <Lock className="h-3.5 w-3.5 text-white mt-1" />
                                             )}
                                         </div>
                                     </motion.button>
@@ -181,15 +182,15 @@ const ExpoFloor2D = ({
             {/* Food Stalls */}
             <div className="mt-6 grid grid-cols-3 gap-4">
                 <div className="p-4 rounded-lg bg-[#fbbf24]/20 border border-[#fbbf24]/50 text-center">
-                    <span className="text-2xl">🍕</span>
+                    <Pizza className="h-6 w-6 mx-auto text-[#fbbf24]" />
                     <p className="text-sm text-[#fbbf24] font-semibold mt-1">Food Court</p>
                 </div>
                 <div className="p-4 rounded-lg bg-[#fbbf24]/20 border border-[#fbbf24]/50 text-center">
-                    <span className="text-2xl">☕</span>
+                    <Coffee className="h-6 w-6 mx-auto text-[#fbbf24]" />
                     <p className="text-sm text-[#fbbf24] font-semibold mt-1">Cafe</p>
                 </div>
                 <div className="p-4 rounded-lg bg-[#fbbf24]/20 border border-[#fbbf24]/50 text-center">
-                    <span className="text-2xl">🍔</span>
+                    <Sandwich className="h-6 w-6 mx-auto text-[#fbbf24]" />
                     <p className="text-sm text-[#fbbf24] font-semibold mt-1">Snacks</p>
                 </div>
             </div>
@@ -207,15 +208,7 @@ const ExpoFloor2D = ({
                     </h3>
                     {companiesAttending.length > 0 && (
                         <div className="relative">
-                            <svg
-                                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#707085] pointer-events-none"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                    d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-                            </svg>
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#707085] pointer-events-none" />
                             <input
                                 type="text"
                                 value={companySearch}
@@ -229,7 +222,7 @@ const ExpoFloor2D = ({
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#707085] hover:text-white transition"
                                     aria-label="Clear search"
                                 >
-                                    ✕
+                                    <X className="h-4 w-4" />
                                 </button>
                             )}
                         </div>
@@ -252,7 +245,7 @@ const ExpoFloor2D = ({
                                     />
                                 ) : (
                                     <div className="w-full h-24 bg-gradient-to-br from-[#1a1a2e] to-[#16213e] flex items-center justify-center">
-                                        <span className="text-3xl">🏢</span>
+                                        <Building2 className="h-8 w-8 text-white/80" />
                                     </div>
                                 )}
                                 <div className="flex flex-col flex-1 p-3 space-y-2">

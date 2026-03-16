@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────
 
 import { useState } from "react";
+import { AlertTriangle, Lightbulb } from "lucide-react";
 import { Icon } from "./Icons";
 import { createExpo, type CreateExpoData, type ExpoLayoutConfig, type ExpoSession } from "../../../services/expo.service";
 import { LayoutBuilderPanel } from "./LayoutBuilderPanel";
@@ -37,7 +38,14 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
     gridRows: 10,
     gridCols: 10,
     paymentAmount: 499,
+    coverImageUrl: "",
   });
+
+  const imagePresets = [
+    "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80",
+  ];
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -88,6 +96,12 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
       case "paymentAmount":
         if (value < 0) return "Payment amount must be 0 or positive";
         return "";
+      case "coverImageUrl":
+        if (!value) return "";
+        if (!/^https?:\/\//i.test(value) && !/^data:image\//i.test(value)) {
+          return "Use a valid image URL (http/https) or select an image file";
+        }
+        return "";
       default:
         return "";
     }
@@ -113,6 +127,9 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
     if (!formData.endDate) errors.endDate = "End date is required";
     if (new Date(formData.startDate) >= new Date(formData.endDate)) {
       errors.endDate = "End date must be after start date";
+    }
+    if (formData.coverImageUrl && !/^https?:\/\//i.test(formData.coverImageUrl) && !/^data:image\//i.test(formData.coverImageUrl)) {
+      errors.coverImageUrl = "Use a valid image URL (http/https) or select an image file";
     }
     if (layoutConfig && layoutConfig.booths.length === 0) {
       errors.layout = "Layout must contain at least one booth";
@@ -159,6 +176,7 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
           gridRows: 10,
           gridCols: 10,
           paymentAmount: 499,
+          coverImageUrl: "",
         });
         setLayoutConfig(null);
         setSessions([]);
@@ -214,13 +232,13 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
           />
         )}
         {hint && !hasError && (
-          <p style={{ fontSize: "12px", color: "#707085", margin: "4px 0 0 0" }}>
-            💡 {hint}
+          <p style={{ fontSize: "12px", color: "#707085", margin: "4px 0 0 0", display: "inline-flex", gap: "6px", alignItems: "center" }}>
+            <Lightbulb size={12} /> {hint}
           </p>
         )}
         {hasError && (
-          <p style={{ fontSize: "12px", color: "#f87171", margin: "4px 0 0 0" }}>
-            ⚠️ {hasError}
+          <p style={{ fontSize: "12px", color: "#f87171", margin: "4px 0 0 0", display: "inline-flex", gap: "6px", alignItems: "center" }}>
+            <AlertTriangle size={12} /> {hasError}
           </p>
         )}
       </div>
@@ -333,6 +351,50 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
               "Describe your expo event, what visitors can expect, etc.",
               false,
               "Helps attendees understand what your expo is about"
+            )}
+
+            {renderFieldWithError(
+              "coverImageUrl",
+              "Cover Image URL",
+              "text",
+              "https://example.com/expo-cover.jpg",
+              false,
+              "Optional banner image shown in expo listing cards"
+            )}
+
+            <div style={{ marginTop: "8px", marginBottom: "12px" }}>
+              <p style={{ fontSize: "12px", color: "#a0a0b0", margin: "0 0 8px 0" }}>Quick image picks</p>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                {imagePresets.map((presetUrl, index) => (
+                  <button
+                    key={presetUrl}
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setFormData((prev) => ({ ...prev, coverImageUrl: presetUrl }))}
+                    style={{ padding: "6px 10px", fontSize: "12px" }}
+                  >
+                    Preset {index + 1}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setFormData((prev) => ({ ...prev, coverImageUrl: "" }))}
+                  style={{ padding: "6px 10px", fontSize: "12px" }}
+                >
+                  Clear image
+                </button>
+              </div>
+            </div>
+
+            {formData.coverImageUrl && (
+              <div style={{ marginTop: "10px", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", overflow: "hidden" }}>
+                <img
+                  src={formData.coverImageUrl}
+                  alt="Expo cover preview"
+                  style={{ width: "100%", maxHeight: "220px", objectFit: "cover", display: "block" }}
+                />
+              </div>
             )}
 
             <div className="form-row">
@@ -451,7 +513,7 @@ export function CreateExpoForm({ onExpoCreated }: CreateExpoFormProps) {
             </div>
 
             {fieldErrors.layout && (
-              <p style={{ fontSize: "12px", color: "#f87171", marginTop: "6px" }}>⚠️ {fieldErrors.layout}</p>
+              <p style={{ fontSize: "12px", color: "#f87171", marginTop: "6px", display: "inline-flex", gap: "6px", alignItems: "center" }}><AlertTriangle size={12} /> {fieldErrors.layout}</p>
             )}
 
             {showLayoutBuilder && (

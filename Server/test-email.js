@@ -1,10 +1,16 @@
 require('dotenv').config();
 const { google } = require("googleapis");
 
+const mask = (value = '') => {
+    if (!value) return 'not-set';
+    if (value.length <= 8) return '********';
+    return `${value.slice(0, 4)}...${value.slice(-4)}`;
+};
+
 console.log("🔧 Testing OAuth2 Setup for Gmail...\n");
 
 // Check environment variables
-console.log("📧 EMAIL_USER:", process.env.EMAIL_USER);
+console.log("📧 EMAIL_USER:", process.env.EMAIL_USER ? mask(process.env.EMAIL_USER) : 'not-set');
 console.log("🔑 CLIENT_ID:", process.env.CLIENT_ID ? "✓ Set" : "✗ Missing");
 console.log("🔑 CLIENT_SECRET:", process.env.CLIENT_SECRET ? "✓ Set" : "✗ Missing");
 console.log("🔑 REFRESH_TOKEN:", process.env.REFRESH_TOKEN ? "✓ Set" : "✗ Missing");
@@ -26,7 +32,6 @@ console.log("🔑 REFRESH_TOKEN:", process.env.REFRESH_TOKEN ? "✓ Set" : "✗ 
 
         const { credentials } = await oauth2Client.refreshAccessToken();
         console.log("✅ Access token generated successfully!");
-        console.log("📋 Access Token:", credentials.access_token.substring(0, 50) + "...");
         console.log("⏰ Token expires in:", credentials.expiry_date);
 
         // Now test with nodemailer
@@ -51,7 +56,7 @@ console.log("🔑 REFRESH_TOKEN:", process.env.REFRESH_TOKEN ? "✓ Set" : "✗ 
                 console.error("   Error:", error.message);
                 console.error("   Code:", error.code);
                 if (error.response) {
-                    console.error("   Response:", error.response);
+                    console.error("   Response status:", error.response);
                 }
             } else {
                 console.log("✅ Transporter verification successful!");
@@ -68,7 +73,7 @@ console.log("🔑 REFRESH_TOKEN:", process.env.REFRESH_TOKEN ? "✓ Set" : "✗ 
         console.error("   2. Check if the refresh token has expired");
         console.error("   3. Ensure Gmail API is enabled in Google Cloud Console");
         console.error("   4. Verify OAuth2 consent screen is configured");
-        console.error("\nFull error:", error);
+        console.error("\nError details:", error.message);
     }
 })();
 

@@ -1,5 +1,6 @@
 const SupportRequest = require('../models/supportRequest.model');
 const Expo = require('../models/expo.model');
+const { notifyAdmins, notifyUser } = require('../services/notification.service');
 
 // @desc    Create support or feedback request
 // @route   POST /api/users/me/support-requests
@@ -34,6 +35,14 @@ exports.createSupportRequest = async (req, res) => {
 
         const createdRequest = await SupportRequest.findById(supportRequest._id)
             .populate('expoId', 'title location startDate endDate status');
+
+        await notifyAdmins({
+            type: 'support-ticket-created',
+            title: 'New support ticket received',
+            message: `${req.user.email} submitted a ${type} ticket: ${subject.trim()}`,
+            metadata: { supportRequestId: supportRequest._id, expoId: expoId || null },
+            dedupeKeyPrefix: `support-ticket-created:${supportRequest._id}`,
+        });
 
         res.status(201).json({
             success: true,
@@ -113,6 +122,15 @@ exports.updateSupportRequestStatus = async (req, res) => {
         if (!request) {
             return res.status(404).json({ success: false, message: 'Support request not found' });
         }
+
+        await notifyUser({
+            userId: request.userId?._id,
+            type: 'support-ticket-updated',
+            title: 'Your support ticket was updated',
+            message: `Your ticket "${request.subject}" is now marked as ${status}.`,
+            metadata: { supportRequestId: request._id, expoId: request.expoId?._id || null },
+            dedupeKey: `support-ticket-updated:${request._id}:${status}`,
+        });
 
         res.status(200).json({
             success: true,

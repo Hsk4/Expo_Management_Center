@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
-import { ChevronDown, LogOut, Menu, Ticket, UserCog, X } from "lucide-react"
+import { ChevronDown, LogOut, Menu, Settings, Ticket, UserCog, X } from "lucide-react"
 import { useAuth } from "../../contexts/Auth.context"
 import { getAttendedExposHistory, type AttendedExpoHistoryItem } from "../../services/expo.service"
+import { getUnreadNotificationCount } from "../../services/notification.service"
 import EventSphereLogo from "./EventSphereLogo"
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false)
     const [showProfileDropdown, setShowProfileDropdown] = useState(false)
     const [attendedHistory, setAttendedHistory] = useState<AttendedExpoHistoryItem[]>([])
+    const [unreadNotifications, setUnreadNotifications] = useState(0)
     const navigate = useNavigate()
     const location = useLocation()
     const { user, logout } = useAuth()
@@ -50,6 +52,32 @@ const Navbar = () => {
 
         fetchHistory()
     }, [showProfileDropdown, user?.role])
+
+    useEffect(() => {
+        if (!user) {
+            setUnreadNotifications(0)
+            return
+        }
+
+        let isMounted = true
+        const loadUnread = async () => {
+            try {
+                const response = await getUnreadNotificationCount()
+                if (isMounted && response.success) {
+                    setUnreadNotifications(response.data.unreadCount || 0)
+                }
+            } catch {
+                if (isMounted) setUnreadNotifications(0)
+            }
+        }
+
+        loadUnread()
+        const intervalId = window.setInterval(loadUnread, 30000)
+        return () => {
+            isMounted = false
+            window.clearInterval(intervalId)
+        }
+    }, [user])
 
     const scrollToSection = (id: string) => {
         setIsOpen(false)
@@ -164,11 +192,31 @@ const Navbar = () => {
                                         <button
                                             onClick={() => {
                                                 setShowProfileDropdown(false)
+                                                navigate("/notifications")
+                                            }}
+                                            className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-white/10 transition"
+                                        >
+                                            Notifications{unreadNotifications > 0 ? ` (${unreadNotifications})` : ""}
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                setShowProfileDropdown(false)
                                                 navigate("/profile")
                                             }}
                                             className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-white/10 transition"
                                         >
                                             <span className="inline-flex items-center gap-2"><UserCog className="h-4 w-4" />Profile settings</span>
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                setShowProfileDropdown(false)
+                                                navigate("/settings")
+                                            }}
+                                            className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-white/10 transition"
+                                        >
+                                            <span className="inline-flex items-center gap-2"><Settings className="h-4 w-4" />Settings</span>
                                         </button>
 
                                         <button
@@ -293,12 +341,30 @@ const Navbar = () => {
                                 </div>
                                 <button
                                     onClick={() => {
+                                        navigate("/notifications")
+                                        setIsOpen(false)
+                                    }}
+                                    className="block w-full text-left px-4 py-2 rounded-lg hover:bg-white/10"
+                                >
+                                    Notifications{unreadNotifications > 0 ? ` (${unreadNotifications})` : ""}
+                                </button>
+                                <button
+                                    onClick={() => {
                                         navigate("/profile")
                                         setIsOpen(false)
                                     }}
                                     className="block w-full text-left px-4 py-2 rounded-lg hover:bg-white/10"
                                 >
                                     Profile settings
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        navigate("/settings")
+                                        setIsOpen(false)
+                                    }}
+                                    className="block w-full text-left px-4 py-2 rounded-lg hover:bg-white/10"
+                                >
+                                    Settings
                                 </button>
                                 <button
                                     onClick={() => {

@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { ArrowLeft, CalendarDays, Clock3, MapPin, Users } from "lucide-react"
 import { getExpoBoothGrid, getExpoById, type BoothData, type ExpoData, type ExpoSession } from "../../../services/expo.service"
 import ExpoFloor2D from "../../../components/booth/ExpoFloor2D"
+import ExpoFloor3D from "../../../components/three/ExpoFloor3D"
 import { addSessionBookmark, getMySessionBookmarks, removeSessionBookmark, type BookmarkedSessionRegistration } from "../../../services/user.service"
 import { useAuth } from "../../../contexts/Auth.context"
+
+type ViewMode = "2d" | "3d"
 
 const ExpoFloorViewPage = () => {
     const navigate = useNavigate()
@@ -19,6 +23,7 @@ const ExpoFloorViewPage = () => {
     const [bookmarkMessage, setBookmarkMessage] = useState("")
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
+    const [viewMode, setViewMode] = useState<ViewMode>("2d")
 
     const orderedSessions = useMemo(
         () => [...(expo?.sessions || [])].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()),
@@ -108,21 +113,49 @@ const ExpoFloorViewPage = () => {
                     onClick={() => navigate("/expos")}
                     className="flex items-center gap-2 text-[#a0a0b0] hover:text-white transition mb-8"
                 >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
+                    <ArrowLeft className="w-5 h-5" />
                     Back to Expos
                 </button>
 
                 <div className="mb-8">
-                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">Expo Floor View</h1>
-                    <p className="text-[#a0a0b0] mb-2">{expo?.title || "Loading expo..."}</p>
-                    {expo && (
-                        <div className="flex flex-wrap gap-4 text-sm text-[#707085]">
-                            <span>📍 {expo.location}</span>
-                            <span>📅 {new Date(expo.startDate).toLocaleDateString()} - {new Date(expo.endDate).toLocaleDateString()}</span>
+                    <div className="flex flex-wrap items-start justify-between gap-4 mb-2">
+                        <div>
+                            <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">Expo Floor View</h1>
+                            <p className="text-[#a0a0b0] mb-2">{expo?.title || "Loading expo..."}</p>
+                            {expo && (
+                                <div className="flex flex-wrap gap-4 text-sm text-[#707085]">
+                                    <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{expo.location}</span>
+                                    <span className="inline-flex items-center gap-1"><CalendarDays className="h-4 w-4" />{new Date(expo.startDate).toLocaleDateString()} - {new Date(expo.endDate).toLocaleDateString()}</span>
+                                </div>
+                            )}
                         </div>
-                    )}
+
+                        {/* View mode toggle */}
+                        {!loading && (
+                            <div className="flex items-center gap-1 p-1 rounded-xl bg-white/5 border border-white/10 self-start">
+                                <button
+                                    onClick={() => setViewMode("2d")}
+                                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+                                        viewMode === "2d"
+                                            ? "bg-[#4c9aff] text-white shadow"
+                                            : "text-[#a0a0b0] hover:text-white"
+                                    }`}
+                                >
+                                    🗺️ 2D View
+                                </button>
+                                <button
+                                    onClick={() => setViewMode("3d")}
+                                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+                                        viewMode === "3d"
+                                            ? "bg-[#a78bfa] text-white shadow"
+                                            : "text-[#a0a0b0] hover:text-white"
+                                    }`}
+                                >
+                                    🏛️ 3D View
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {loading && <p className="text-[#a0a0b0]">Loading expo floor...</p>}
@@ -131,17 +164,34 @@ const ExpoFloorViewPage = () => {
 
                 {!loading && expoId && (
                     <div className="space-y-8">
-                        <div style={{ minHeight: "600px" }}>
-                            <ExpoFloor2D
-                                booths={booths}
-                                gridRows={gridRows}
-                                gridCols={gridCols}
-                                selectedBoothId={null}
-                                canBook={false}
-                                userRole={user?.role === "exhibitor" ? "exhibitor" : "attendee"}
-                                expoId={expoId}
-                            />
-                        </div>
+                        {/* 2D Floor View */}
+                        {viewMode === "2d" && (
+                            <div style={{ minHeight: "600px" }}>
+                                <ExpoFloor2D
+                                    booths={booths}
+                                    gridRows={gridRows}
+                                    gridCols={gridCols}
+                                    selectedBoothId={null}
+                                    canBook={false}
+                                    userRole={user?.role === "exhibitor" ? "exhibitor" : "attendee"}
+                                    expoId={expoId}
+                                />
+                            </div>
+                        )}
+
+                        {/* 3D Floor View */}
+                        {viewMode === "3d" && (
+                            <div className="rounded-2xl overflow-hidden border border-[#a78bfa]/30" style={{ height: "680px" }}>
+                                <ExpoFloor3D
+                                    booths={booths}
+                                    gridRows={gridRows}
+                                    gridCols={gridCols}
+                                    selectedBoothId={null}
+                                    canInteract={false}
+                                    showExhibitorNames={true}
+                                />
+                            </div>
+                        )}
 
                         <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
                             <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
@@ -183,9 +233,9 @@ const ExpoFloorViewPage = () => {
                                                 </div>
 
                                                 <div className="space-y-2 text-sm text-[#d4d4d8]">
-                                                    <p>🕒 {formatDateTime(session.startTime)} - {formatDateTime(session.endTime)}</p>
-                                                    <p>📍 {session.location || "Location to be announced"}</p>
-                                                    <p>👥 Capacity: {session.capacity || 50}</p>
+                                                    <p className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4" />{formatDateTime(session.startTime)} - {formatDateTime(session.endTime)}</p>
+                                                    <p className="inline-flex items-center gap-2"><MapPin className="h-4 w-4" />{session.location || "Location to be announced"}</p>
+                                                    <p className="inline-flex items-center gap-2"><Users className="h-4 w-4" />Capacity: {session.capacity || 50}</p>
                                                 </div>
 
                                                 {session.description && (

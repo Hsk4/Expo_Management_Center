@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { Lightbulb } from "lucide-react"
 import * as THREE from "three"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
 import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js"
@@ -211,9 +212,9 @@ const ExpoFloor3D = ({
         const centerRow = Math.floor(gridRows / 2)
         const centerCol = Math.floor(gridCols / 2)
 
-        createFoodStall(centerCol * 3 - 4, centerRow * 3, scene, "🍕 Food")
-        createFoodStall(centerCol * 3 + 1, centerRow * 3, scene, "☕ Cafe")
-        createFoodStall(centerCol * 3 - 1.5, centerRow * 3 + 3, scene, "🍔 Snacks")
+        createFoodStall(centerCol * 3 - 4, centerRow * 3, scene, "Food")
+        createFoodStall(centerCol * 3 + 1, centerRow * 3, scene, "Cafe")
+        createFoodStall(centerCol * 3 - 1.5, centerRow * 3 + 3, scene, "Snacks")
 
         // Cleanup
         return () => {
@@ -788,7 +789,7 @@ const ExpoFloor3D = ({
             {/* Info tooltip with admin styling */}
             {!walkthroughMode && (
                 <div className="absolute bottom-4 left-4 text-xs text-[#a0a0b0] bg-[#0a0a0f]/90 border border-[#4c9aff]/30 backdrop-blur-md px-4 py-2 rounded-lg shadow-lg pointer-events-auto z-10">
-                    <span className="text-[#4c9aff]">💡</span> Left-click: Select | Right-click: Preview | Drag: Rotate | Scroll: Zoom
+                    <span className="inline-flex items-center gap-1"><Lightbulb className="h-3.5 w-3.5 text-[#4c9aff]" />Left-click: Select | Right-click: Preview | Drag: Rotate | Scroll: Zoom</span>
                 </div>
             )}
         </div>

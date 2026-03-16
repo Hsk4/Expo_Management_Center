@@ -23,6 +23,7 @@ export interface ExpoData {
     totalBoothsGenerated: number;
     isActive: boolean;
     paymentAmount?: number;
+    coverImageUrl?: string;
     layout?: ExpoLayoutConfig;
     sessions?: ExpoSession[];
     createdBy: {
@@ -49,6 +50,7 @@ export interface CreateExpoData {
     layout?: ExpoLayoutConfig;
     sessions?: ExpoSession[];
     paymentAmount?: number;
+    coverImageUrl?: string;
 }
 
 export interface UpdateExpoData extends Partial<CreateExpoData> {}

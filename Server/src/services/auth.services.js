@@ -1,11 +1,12 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const ENV = require('../config/env');
 
 const generateToken = (user) => {
     return jwt.sign(
         { id: user._id, email: user.email, role: user.role },
-        process.env.JWT_ACCESS_SECRET,
+        ENV.JWT_ACCESS_SECRET,
         { expiresIn: '7h' }
 
     );

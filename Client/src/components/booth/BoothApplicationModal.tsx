@@ -3,6 +3,7 @@ import { motion } from "framer-motion"
 import type { BoothData, BoothCompanyProfileInput } from "../../services/expo.service"
 import { payBoothApplication, submitBoothApplication } from "../../services/expo.service"
 import PaymentSimulationModal from "../common/PaymentSimulationModal"
+import ImagePickerField from "../ui/ImagePickerField"
 
 interface BoothApplicationModalProps {
     booth: BoothData
@@ -66,6 +67,10 @@ const BoothApplicationModal = ({ booth, expoId, onClose, onSuccess }: BoothAppli
     const [paymentOpen, setPaymentOpen] = useState(false)
     const [applicationId, setApplicationId] = useState("")
     const [paymentAmount, setPaymentAmount] = useState(499)
+
+    const requiredQuestions = APPLICATION_QUESTIONS.filter((q) => q.required)
+    const answeredRequiredCount = requiredQuestions.filter((q) => Boolean(answers[q.id])).length
+    const canSubmit = Boolean(companyProfile.companyName?.trim()) && answeredRequiredCount === requiredQuestions.length && !submitting
 
     const handleAnswerChange = (questionId: string, answer: string) => {
         setAnswers(prev => ({ ...prev, [questionId]: answer }))
@@ -170,6 +175,9 @@ const BoothApplicationModal = ({ booth, expoId, onClose, onSuccess }: BoothAppli
                     <p className="text-sm text-[#4c9aff]">
                         📋 Please complete the following questions. Your application will be reviewed by the expo organizers.
                     </p>
+                    <p className="text-xs text-[#93c5fd] mt-2">
+                        Required answers: {answeredRequiredCount}/{requiredQuestions.length}
+                    </p>
                 </div>
 
                 {/* Company Profile */}
@@ -186,12 +194,12 @@ const BoothApplicationModal = ({ booth, expoId, onClose, onSuccess }: BoothAppli
                             />
                         </div>
                         <div className="md:col-span-2">
-                            <label className="text-xs text-[#a0a0b0] mb-1 block">Banner Image URL (optional)</label>
-                            <input
+                            <ImagePickerField
+                                label="Banner Image"
                                 value={companyProfile.bannerImage || ""}
-                                onChange={(e) => handleCompanyFieldChange("bannerImage", e.target.value)}
-                                placeholder="https://..."
-                                className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white focus:border-[#4c9aff] outline-none"
+                                onChange={(next) => handleCompanyFieldChange("bannerImage", next)}
+                                placeholder="https://your-company-banner.jpg"
+                                helperText="Optional public image for your booth profile"
                             />
                         </div>
                         <div>
@@ -286,7 +294,7 @@ const BoothApplicationModal = ({ booth, expoId, onClose, onSuccess }: BoothAppli
                     </button>
                     <button
                         onClick={handleSubmit}
-                        disabled={submitting}
+                        disabled={!canSubmit}
                         className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-[#4c9aff] to-[#a78bfa] hover:from-[#3b82f6] hover:to-[#9333ea] disabled:from-[#4c9aff]/60 disabled:to-[#a78bfa]/60 text-white font-semibold transition shadow-lg"
                     >
                         {submitting ? "Submitting..." : "Submit & continue to payment"}

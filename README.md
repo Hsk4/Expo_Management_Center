@@ -48,6 +48,39 @@ App will be live at **http://localhost:80**
 
 ---
 
+## Production Readiness & Secrets
+
+- Never commit real `.env` files or credentials.
+- Use `Server/.env.example` and `Client/.env.example` as templates.
+- Rotate any credential that was ever exposed in logs, screenshots, terminal output, or commits.
+
+### Backend Required Environment Variables
+
+- `MONGO_URI`
+- `JWT_ACCESS_SECRET`
+- `CLIENT_URL`
+- `CORS_ORIGINS` (comma-separated allowlist)
+
+Email credentials are optional and only required for transactional emails:
+
+- `EMAIL_USER`
+- `CLIENT_ID`
+- `CLIENT_SECRET`
+- `REFRESH_TOKEN`
+
+### Frontend Environment Variable
+
+- `VITE_API_URL` (example: `https://api.yourdomain.com/api` or `/api` behind reverse proxy)
+
+### Quick Setup
+
+```bash
+cp Server/.env.example Server/.env
+cp Client/.env.example Client/.env
+```
+
+---
+
 ## Project Structure
 ```
 ├── Client/          # React frontend

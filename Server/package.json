@@ -21,10 +21,11 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test ./test/**/*.test.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Hammad Tariq, Farhan Mendhro, Faaiz Adnan",
   "license": "ISC",
   "description": "",
   "devDependencies": {

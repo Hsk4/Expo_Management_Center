@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import { LayoutTemplateSelector } from "../layout/components/LayoutTemplateSelector";
 import { LayoutEditor } from "../layout/components/LayoutEditor";
 import type { EventType, ExpoLayoutData, LayoutTemplate } from "../layout/types/layout.types";
@@ -115,7 +116,7 @@ export function LayoutBuilderPanel({ onApply, onCancel }: LayoutBuilderPanelProp
       </div>
 
       {error && (
-        <div style={{ marginBottom: "12px", color: "#f87171", fontSize: "13px" }}>⚠️ {error}</div>
+        <div style={{ marginBottom: "12px", color: "#f87171", fontSize: "13px", display: "inline-flex", gap: "6px", alignItems: "center" }}><AlertTriangle size={14} /> {error}</div>
       )}
 
       {step === "select" && (

@@ -1,10 +1,10 @@
-require('dotenv').config();
-
 const http = require('http');
 const app = require('./src/app');
 const connectDb = require('./src/config/db');
+const ENV = require('./src/config/env');
+const { startNotificationScheduler } = require('./src/services/notificationScheduler.service');
 
-const PORT = process.env.PORT || 3000;
+const PORT = ENV.PORT;
 
 // connection to mongo db
 connectDb();
@@ -25,4 +25,5 @@ server.on('error', (error) => {
 // listen for requests
 server.listen(PORT, ()=> {
     console.log(`Server is running on http://localhost:${PORT}`);
+    startNotificationScheduler();
 });

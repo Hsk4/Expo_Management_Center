@@ -1,4 +1,5 @@
 import { motion } from "framer-motion"
+import { Building2, Globe, Instagram, Linkedin, Mail, UserRound, X } from "lucide-react"
 import type { BoothData } from "../../services/expo.service"
 
 interface BoothDetailsModalProps {
@@ -22,25 +23,15 @@ const IconLink = ({ href, icon, label }: { href: string; icon: React.ReactNode; 
 )
 
 const WebsiteIcon = () => (
-    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9" />
-    </svg>
+    <Globe className="w-3.5 h-3.5" />
 )
 
 const LinkedInIcon = () => (
-    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" />
-        <circle cx="4" cy="4" r="2" />
-    </svg>
+    <Linkedin className="w-3.5 h-3.5" />
 )
 
 const InstagramIcon = () => (
-    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-        <circle cx="12" cy="12" r="4" />
-        <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" />
-    </svg>
+    <Instagram className="w-3.5 h-3.5" />
 )
 
 /* ---------------------------------- */
@@ -80,9 +71,7 @@ const BoothDetailsModal = ({ booth, onClose, userRole }: BoothDetailsModalProps)
                         <p className="text-[#707085] text-sm">Row {booth.row} · Column {booth.col}</p>
                     </div>
                     <button onClick={onClose} className="text-[#a0a0b0] hover:text-white transition mt-1">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <X className="w-6 h-6" />
                     </button>
                 </div>
 
@@ -102,7 +91,7 @@ const BoothDetailsModal = ({ booth, onClose, userRole }: BoothDetailsModalProps)
                                 />
                             ) : (
                                 <div className="w-full h-32 bg-gradient-to-br from-[#1a1a2e] to-[#16213e] flex items-center justify-center">
-                                    <span className="text-5xl">🏢</span>
+                                    <Building2 className="h-12 w-12 text-white/80" />
                                 </div>
                             )}
 
@@ -124,19 +113,13 @@ const BoothDetailsModal = ({ booth, onClose, userRole }: BoothDetailsModalProps)
                                         <p className="text-xs font-semibold text-[#707085] uppercase tracking-wider mb-2">Contact</p>
                                         {ed.contactName && (
                                             <div className="flex items-center gap-2 text-sm text-[#d4d4d8]">
-                                                <svg className="w-4 h-4 text-[#707085] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                </svg>
+                                                <UserRound className="w-4 h-4 text-[#707085] shrink-0" />
                                                 {ed.contactName}
                                             </div>
                                         )}
                                         {ed.contactEmail && (
                                             <div className="flex items-center gap-2 text-sm text-[#d4d4d8]">
-                                                <svg className="w-4 h-4 text-[#707085] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                </svg>
+                                                <Mail className="w-4 h-4 text-[#707085] shrink-0" />
                                                 <a href={`mailto:${ed.contactEmail}`} className="text-[#4c9aff] hover:underline">
                                                     {ed.contactEmail}
                                                 </a>

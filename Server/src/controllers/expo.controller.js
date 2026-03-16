@@ -2,6 +2,7 @@ const Expo = require('../models/expo.model');
 const Booth = require('../models/booth.model');
 const User = require('../models/user.model');
 const { generateBoothGrid } = require('../modules/booths/booth.service');
+const { notifyExpoPublished, notifyUser } = require('../services/notification.service');
 
 const createPaymentReference = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
 
@@ -9,11 +10,8 @@ const createPaymentReference = (prefix) => `${prefix}-${Date.now()}-${Math.floor
 
 exports.createExpo = async (req, res) => {
     try{
-        console.log('Creating expo with data:', req.body);
-        console.log('User:', req.user);
-        const{title, description, theme, location, startDate, endDate, maxBooths,maxAttendees, gridRows, gridCols, layout, sessions} = req.body;
+        const{title, description, theme, location, startDate, endDate, maxBooths,maxAttendees, gridRows, gridCols, layout, sessions, paymentAmount, coverImageUrl} = req.body;
 
-        console.log('About to create expo...');
         const expo = await Expo.create({
             title,
             description,
@@ -27,10 +25,11 @@ exports.createExpo = async (req, res) => {
             gridCols,
             layout: layout || undefined,
             sessions: Array.isArray(sessions) ? sessions : [],
+            paymentAmount,
+            coverImageUrl,
             totalBoothsGenerated : gridRows * gridCols,
             createdBy : req.user._id,
         });
-        console.log('Expo created:', expo._id);
 
         const createdExpo = await Expo.findById(expo._id).populate('createdBy', 'name email role');
 
@@ -40,7 +39,7 @@ exports.createExpo = async (req, res) => {
             data: createdExpo,
         });
     }catch (error) {
-        console.error('Create expo error:', error);
+        console.error('Create expo error:', error.message);
         res.status(400).json({
             success: false,
             message: error.message,
@@ -83,7 +82,7 @@ exports.getExpoById = async (req, res) => {
             data : expo,
         })
     }
-    catch (e) {
+    catch (error) {
         res.status(500).json({
             success: false,
             message : error.message,
@@ -148,7 +147,7 @@ exports.updateExpo = async (req, res) => {
             message : "Expo updated successfully",
             data : updatedExpo,
         })
-    }catch (e) {
+    }catch (error) {
         res.status(400).json({
             success: false,
             message : error.message,
@@ -181,13 +180,15 @@ exports.publishExpo = async (req, res) => {
 
         const publishedExpo = await Expo.findById(expo._id).populate('createdBy', 'name email role');
 
+        await notifyExpoPublished(publishedExpo);
+
         res.status(200).json({
             success: true,
             message : "Expo published successfully",
             data : publishedExpo,
         })
     }
-    catch (e) {
+    catch (error) {
         res.status(500).json({
             success: false,
             message : error.message,
@@ -234,6 +235,14 @@ exports.attendExpo = async (req, res) => {
 
         await user.save();
         await expo.save();
+
+        await notifyUser({
+            userId: req.user._id,
+            type: 'attendee-payment-approved',
+            title: 'Attendance payment approved',
+            message: `Your payment for ${expo.title} is confirmed (${seatsRequested} seat${seatsRequested > 1 ? 's' : ''}).`,
+            metadata: { expoId: expo._id },
+        });
 
         res.status(200).json({
             success: true,

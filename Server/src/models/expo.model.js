@@ -153,6 +153,11 @@ const expoSchema = new mongoose.Schema({
         min: [0, "Payment amount cannot be negative"],
         default: 499,
     },
+    coverImageUrl: {
+        type: String,
+        trim: true,
+        default: "",
+    },
     createdBy : {
         type : mongoose.Schema.Types.ObjectId,
         ref : "User",

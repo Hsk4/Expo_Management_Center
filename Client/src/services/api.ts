@@ -1,8 +1,13 @@
 import axios from "axios"
 import { clearAuthCookies } from "../utils/cookieUtils"
 
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+const apiBaseUrl = configuredApiUrl && configuredApiUrl.length > 0
+    ? configuredApiUrl
+    : "/api";
+
 const api = axios.create({
-    baseURL: "http://localhost:3000/api",
+    baseURL: apiBaseUrl,
     withCredentials: true,
 })
 

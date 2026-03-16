@@ -12,6 +12,7 @@ const LoginForm = ({ role, accent }: Props) => {
     const [error, setError] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [showPassword, setShowPassword] = useState(false)
     const { login } = useAuth()
     const navigate = useNavigate()
 
@@ -61,14 +62,24 @@ const LoginForm = ({ role, accent }: Props) => {
 
             <div>
                 <label className="text-sm text-neutral-300">Password</label>
-                <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className={`w-full mt-2 px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 ${accent} transition`}
-                    placeholder="Enter your password"
-                />
+                <div className="mt-2 flex gap-2">
+                    <input
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className={`flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 ${accent} transition`}
+                        placeholder="Enter your password"
+                        autoComplete="current-password"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="px-3 rounded-xl border border-white/20 text-neutral-300 hover:text-white hover:bg-white/10 transition"
+                    >
+                        {showPassword ? "Hide" : "Show"}
+                    </button>
+                </div>
             </div>
 
             {/* Forgot password */}
@@ -84,9 +95,9 @@ const LoginForm = ({ role, accent }: Props) => {
             {/* Login button */}
             <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !email.trim() || !password.trim()}
                 className={`w-full py-3 rounded-xl font-semibold transition ${
-                    loading
+                    (loading || !email.trim() || !password.trim())
                         ? "bg-neutral-600 cursor-not-allowed"
                         : "bg-white text-black hover:bg-neutral-200"
                 }`}

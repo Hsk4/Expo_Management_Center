@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUserProfile, updateCurrentUserProfile, type UserProfileData } from '../../../services/user.service';
 import { useAuth } from '../../../contexts/Auth.context';
+import ImagePickerField from '../../../components/ui/ImagePickerField';
 
 const emptyProfile: UserProfileData = {
     id: '',
@@ -33,6 +34,7 @@ const ProfilePage = () => {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [avatarPreviewBroken, setAvatarPreviewBroken] = useState(false);
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -68,6 +70,9 @@ const ProfilePage = () => {
                 [field]: value,
             },
         }));
+        if (field === 'avatarUrl') {
+            setAvatarPreviewBroken(false);
+        }
         setSuccess('');
     };
 
@@ -131,11 +136,12 @@ const ProfilePage = () => {
                         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
                             <div className="rounded-2xl border border-white/10 bg-white/5 p-6 h-fit">
                                 <div className="flex flex-col items-center text-center">
-                                    {form.profile.avatarUrl ? (
+                                    {form.profile.avatarUrl && !avatarPreviewBroken ? (
                                         <img
                                             src={form.profile.avatarUrl}
                                             alt={form.name}
                                             className="w-24 h-24 rounded-full object-cover border border-white/10 mb-4"
+                                            onError={() => setAvatarPreviewBroken(true)}
                                         />
                                     ) : (
                                         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#4c9aff] to-[#a78bfa] flex items-center justify-center text-3xl font-bold text-white mb-4">
@@ -173,15 +179,15 @@ const ProfilePage = () => {
                                                 placeholder="you@example.com"
                                             />
                                         </label>
-                                        <label className="space-y-2 text-sm text-[#a0a0b0] md:col-span-2">
-                                            <span>Avatar URL</span>
-                                            <input
+                                        <div className="md:col-span-2">
+                                            <ImagePickerField
+                                                label="Avatar"
                                                 value={form.profile.avatarUrl}
-                                                onChange={(e) => handleProfileChange('avatarUrl', e.target.value)}
-                                                className="w-full px-4 py-3 rounded-xl bg-[#050507] border border-white/10 text-white outline-none focus:border-[#4c9aff]"
+                                                onChange={(next) => handleProfileChange('avatarUrl', next)}
                                                 placeholder="https://example.com/avatar.jpg"
+                                                helperText="Add a profile photo from URL or choose an image file"
                                             />
-                                        </label>
+                                        </div>
                                         <label className="space-y-2 text-sm text-[#a0a0b0]">
                                             <span>Phone</span>
                                             <input

@@ -11,6 +11,7 @@
 /// IF there is error after pulling run this command : npm install --save-dev @types/react @types/react-dom vite
 
 import { useState, useEffect } from "react";
+import { AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "./dashboard.css";
 import {
@@ -21,6 +22,7 @@ import {
   type BoothApplicationData,
   type ExpoData,
 } from "../../../services/expo.service";
+import { getUnreadNotificationCount } from "../../../services/notification.service";
 import { useAuth } from "../../../contexts/Auth.context";
 import { Icon } from "../components/Icons";
 import { DashboardOverview } from "../components/DashboardOverview";
@@ -49,6 +51,7 @@ export default function AdminDashboardPage() {
   const [pendingCount, setPendingCount] = useState(0);
   const [applications, setApplications] = useState<BoothApplicationData[]>([]);
   const [busyOverviewActionId, setBusyOverviewActionId] = useState<string | null>(null);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const loadDashboardData = async () => {
     const [exposResponse, applicationsResponse] = await Promise.all([
@@ -92,9 +95,24 @@ export default function AdminDashboardPage() {
     runLoad();
     const intervalId = window.setInterval(runLoad, 15000);
 
+    const loadUnreadNotifications = async () => {
+      try {
+        const response = await getUnreadNotificationCount();
+        if (response.success) {
+          setUnreadNotifications(response.data.unreadCount || 0);
+        }
+      } catch {
+        setUnreadNotifications(0);
+      }
+    };
+
+    loadUnreadNotifications();
+    const unreadIntervalId = window.setInterval(loadUnreadNotifications, 30000);
+
     return () => {
       isActive = false;
       window.clearInterval(intervalId);
+      window.clearInterval(unreadIntervalId);
     };
   }, []);
 
@@ -159,9 +177,9 @@ export default function AdminDashboardPage() {
             <Icon.Search />
             <input placeholder="Search expos, people…" />
           </div>
-          <button className="bell-btn">
+          <button className="bell-btn" onClick={() => navigate("/notifications")}>
             <Icon.Bell />
-            {pendingCount > 0 && <span className="bell-dot" />}
+            {(pendingCount > 0 || unreadNotifications > 0) && <span className="bell-dot" />}
           </button>
 
           {/* Profile Dropdown */}
@@ -187,10 +205,22 @@ export default function AdminDashboardPage() {
 
                 <div className="dropdown-divider"></div>
 
-                <button className="dropdown-item">
+                <button
+                  className="dropdown-item"
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    navigate("/profile");
+                  }}
+                >
                   <span>👤 Profile</span>
                 </button>
-                <button className="dropdown-item">
+                <button
+                  className="dropdown-item"
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    navigate("/settings");
+                  }}
+                >
                   <span>⚙️ Settings</span>
                 </button>
 
@@ -255,7 +285,10 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="sidebar-footer">
-            <div className="nav-item">
+            <div
+              className="nav-item"
+              onClick={() => navigate("/settings")}
+            >
               <span className="nav-icon"><Icon.Settings /></span>
               {isSidebarOpen && <span>Settings</span>}
             </div>
@@ -270,7 +303,7 @@ export default function AdminDashboardPage() {
             </div>
           ) : error ? (
             <div className="error-state">
-              <p>⚠️ {error}</p>
+              <p style={{ display: "inline-flex", gap: "6px", alignItems: "center" }}><AlertTriangle size={16} /> {error}</p>
               <button
                 onClick={fetchExpos}
                 style={{

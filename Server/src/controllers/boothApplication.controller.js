@@ -2,6 +2,7 @@ const BoothApplication = require('../models/boothApplication.model');
 const Booth = require('../models/booth.model');
 const Expo = require('../models/expo.model');
 const User = require('../models/user.model');
+const { notifyUser } = require('../services/notification.service');
 
 const createPaymentReference = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
 
@@ -65,7 +66,7 @@ exports.submitApplication = async (req, res) => {
             data: application
         });
     } catch (error) {
-        console.error('Submit application error:', error);
+        console.error('Submit application error:', error.message);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };
@@ -144,6 +145,15 @@ exports.payForApplication = async (req, res) => {
             Expo.findByIdAndUpdate(application.expoId, { $inc: { boothsBookedCount: 1 } }),
         ]);
 
+        const expoForNotification = await Expo.findById(application.expoId).select('title');
+        await notifyUser({
+            userId: application.exhibitorId,
+            type: 'exhibitor-payment-approved',
+            title: 'Booth payment approved',
+            message: `Payment received. Your booth ${booth.boothNumber} is allotted for ${expoForNotification?.title || 'the expo'}.`,
+            metadata: { expoId: application.expoId, boothApplicationId: application._id },
+        });
+
         res.json({
             success: true,
             message: 'Payment successful. Booth has been allotted.',
@@ -157,7 +167,7 @@ exports.payForApplication = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Pay application error:', error);
+        console.error('Pay application error:', error.message);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };
@@ -185,7 +195,7 @@ exports.getApplications = async (req, res) => {
             data: applications
         });
     } catch (error) {
-        console.error('Get applications error:', error);
+        console.error('Get applications error:', error.message);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };
@@ -245,13 +255,22 @@ exports.approveApplication = async (req, res) => {
             { $inc: { boothsBookedCount: 1 } }
         );
 
+        const expoForNotification = await Expo.findById(application.expoId).select('title');
+        await notifyUser({
+            userId: application.exhibitorId,
+            type: 'booth-allotment-approved',
+            title: 'Booth allotment approved',
+            message: `Your booth ${booth.boothNumber} is now approved for ${expoForNotification?.title || 'the expo'}.`,
+            metadata: { expoId: application.expoId, boothApplicationId: application._id },
+        });
+
         res.json({
             success: true,
             message: 'Application approved successfully',
             data: application
         });
     } catch (error) {
-        console.error('Approve application error:', error);
+        console.error('Approve application error:', error.message);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };
@@ -280,13 +299,22 @@ exports.rejectApplication = async (req, res) => {
         application.reviewedBy = req.user._id;
         await application.save();
 
+        const expoForNotification = await Expo.findById(application.expoId).select('title');
+        await notifyUser({
+            userId: application.exhibitorId,
+            type: 'booth-allotment-rejected',
+            title: 'Booth application rejected',
+            message: `Your booth request for ${expoForNotification?.title || 'the expo'} was rejected.${application.rejectionReason ? ` Reason: ${application.rejectionReason}` : ''}`,
+            metadata: { expoId: application.expoId, boothApplicationId: application._id },
+        });
+
         res.json({
             success: true,
             message: 'Application rejected',
             data: application
         });
     } catch (error) {
-        console.error('Reject application error:', error);
+        console.error('Reject application error:', error.message);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { CalendarDays, MapPin } from "lucide-react"
 import { attendExpo, getAllExpos, type ExpoData } from "../../../services/expo.service"
 
 const ExhibitorDashboardPage = () => {
@@ -82,10 +83,21 @@ const ExhibitorDashboardPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {expos.map((expo) => (
                             <div key={expo._id} className="p-6 rounded-2xl bg-[#0a0a0f] border border-[#4c9aff]/30 backdrop-blur-md hover:border-[#4c9aff]/50 transition">
+                                <div className="aspect-video rounded-lg bg-gradient-to-br from-[#4c9aff]/20 to-[#a78bfa]/20 mb-4 relative overflow-hidden">
+                                    {expo.coverImageUrl ? (
+                                        <img
+                                            src={expo.coverImageUrl}
+                                            alt={`${expo.title} cover`}
+                                            className="absolute inset-0 w-full h-full object-cover"
+                                        />
+                                    ) : null}
+                                    <div className="absolute inset-0 bg-black/35" />
+                                    <span className="relative z-10 text-xs text-[#d4d4d8] inline-block p-2">{expo.theme || "Expo"}</span>
+                                </div>
                                 <h3 className="text-xl font-semibold text-white mb-2">{expo.title}</h3>
                                 <p className="text-sm text-[#a0a0b0] mb-4 line-clamp-2">{expo.description}</p>
-                                <p className="text-xs text-[#707085] mb-1">📍 {expo.location}</p>
-                                <p className="text-xs text-[#707085] mb-4">📅 {formatDate(expo.startDate)} - {formatDate(expo.endDate)}</p>
+                                <p className="text-xs text-[#707085] mb-1 inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{expo.location}</p>
+                                <p className="text-xs text-[#707085] mb-4 inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{formatDate(expo.startDate)} - {formatDate(expo.endDate)}</p>
 
                                 <div className="space-y-2">
                                     <button

@@ -15,8 +15,14 @@ const RegisterForm = ({ role, accent }: Props) => {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
+    const [acceptTerms, setAcceptTerms] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const { login } = useAuth()
     const navigate = useNavigate()
+    const hasPasswordMismatch = Boolean(confirmPassword) && password !== confirmPassword
+    const isPasswordTooShort = Boolean(password) && password.length < 6
+    const canSubmit = !loading && name.trim().length > 1 && email.trim().length > 3 && !isPasswordTooShort && !hasPasswordMismatch && acceptTerms
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -90,42 +96,67 @@ const RegisterForm = ({ role, accent }: Props) => {
                     <label className="text-sm text-neutral-300">Company Name</label>
                     <input
                         type="text"
-                        required
                         className={`w-full mt-2 px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 ${accent} transition`}
                         placeholder="Enter your company name"
                     />
+                    <p className="text-xs text-neutral-500 mt-1">You can complete your public company profile later in account settings.</p>
                 </div>
             )}
 
             <div>
                 <label className="text-sm text-neutral-300">Password</label>
-                <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className={`w-full mt-2 px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 ${accent} transition`}
-                    placeholder="Create a password"
-                />
+                <div className="mt-2 flex gap-2">
+                    <input
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className={`flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 ${accent} transition`}
+                        placeholder="Create a password"
+                        autoComplete="new-password"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="px-3 rounded-xl border border-white/20 text-neutral-300 hover:text-white hover:bg-white/10 transition"
+                    >
+                        {showPassword ? "Hide" : "Show"}
+                    </button>
+                </div>
+                <p className={`text-xs mt-1 ${isPasswordTooShort ? 'text-red-400' : 'text-neutral-500'}`}>
+                    Password should be at least 6 characters.
+                </p>
             </div>
 
             <div>
                 <label className="text-sm text-neutral-300">Confirm Password</label>
-                <input
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className={`w-full mt-2 px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 ${accent} transition`}
-                    placeholder="Confirm your password"
-                />
+                <div className="mt-2 flex gap-2">
+                    <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        required
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className={`flex-1 px-4 py-3 rounded-xl bg-white/10 border ${hasPasswordMismatch ? 'border-red-500/50' : 'border-white/20'} focus:outline-none focus:ring-2 ${accent} transition`}
+                        placeholder="Confirm your password"
+                        autoComplete="new-password"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                        className="px-3 rounded-xl border border-white/20 text-neutral-300 hover:text-white hover:bg-white/10 transition"
+                    >
+                        {showConfirmPassword ? "Hide" : "Show"}
+                    </button>
+                </div>
+                {hasPasswordMismatch && <p className="text-xs text-red-400 mt-1">Passwords do not match.</p>}
             </div>
 
             {/* Terms and conditions */}
             <div className="flex items-start gap-2">
                 <input
                     type="checkbox"
-                    required
+                    checked={acceptTerms}
+                    onChange={(e) => setAcceptTerms(e.target.checked)}
                     className="mt-1"
                     id="terms"
                 />
@@ -144,9 +175,9 @@ const RegisterForm = ({ role, accent }: Props) => {
             {/* Register button */}
             <button
                 type="submit"
-                disabled={loading}
+                disabled={!canSubmit}
                 className={`w-full py-3 rounded-xl font-semibold transition ${
-                    loading
+                    !canSubmit
                         ? "bg-neutral-600 cursor-not-allowed"
                         : "bg-white text-black hover:bg-neutral-200"
                 }`}
