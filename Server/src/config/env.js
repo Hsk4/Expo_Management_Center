@@ -54,7 +54,7 @@ const ENV = {
 	isProduction,
 	PORT: toNumber(process.env.PORT, 3000),
 	MONGO_URI: process.env.MONGO_URI || 'mongodb://mongodb:27017/expo_management_center',
-	JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || 'dev-secret-changeme-in-product,
+	JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || 'dev-secret-changeme-in-product',
 	CLIENT_URL: process.env.CLIENT_URL || '',
 	CORS_ORIGINS,
 	RATE_LIMIT_MAX: toNumber(process.env.RATE_LIMIT_MAX, 200),
