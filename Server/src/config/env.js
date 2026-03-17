@@ -53,8 +53,8 @@ const ENV = {
 	NODE_ENV,
 	isProduction,
 	PORT: toNumber(process.env.PORT, 3000),
-	MONGO_URI: requireEnv('MONGO_URI'),
-	JWT_ACCESS_SECRET: requireEnv('JWT_ACCESS_SECRET'),
+	MONGO_URI: process.env.MONGO_URI || 'mongodb://mongodb:27017/expo_management_center',
+	JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || 'dev-secret-changeme-in-product,
 	CLIENT_URL: process.env.CLIENT_URL || '',
 	CORS_ORIGINS,
 	RATE_LIMIT_MAX: toNumber(process.env.RATE_LIMIT_MAX, 200),
@@ -62,6 +62,10 @@ const ENV = {
 	ENABLE_REQUEST_LOGS: toBoolean(process.env.ENABLE_REQUEST_LOGS, !isProduction),
 	EMAIL_ENABLED,
 	EMAIL_CONFIG: emailConfig,
+
+	// commented for now should be used when the app reaches production phase.
+	// MONGO_URI: requireEnv('MONGO_URI'),
+	// JWT_ACCESS_SECRET: requireEnv('JWT_ACCESS_SECRET'),
 };
 
 module.exports = ENV;
